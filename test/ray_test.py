@@ -66,7 +66,7 @@ if __name__=="__main__":
     
     #object = o3d.geometry.TriangleMesh.create_box().translate([0, 0, 0])
     #object = o3d.geometry.TriangleMesh.create_torus().translate([0, 0, 2])
-    object = mesh = o3d.io.read_triangle_mesh("frame_0001.ply")
+    object = o3d.io.read_triangle_mesh("test/frame_0001.ply")
 
     #print('Vertices:')
     #print(len(np.asarray(mesh.vertices)))
