@@ -46,7 +46,7 @@ def build_dict(ans, object):
                     "dv3": dv3
                 })
 
-    print("dictionary created!!!!1")
+    print("dictionary created!!!!")
 
     return hit_data
 
@@ -98,7 +98,7 @@ def create_cameras():
     intrinsics = get_intrinsic_matrix()
     
     # getting extrinsics from blender and putting them together
-    with open("test/sim_camera_extrinsics.txt", "r") as f:
+    with open("sim_camera_extrinsics.txt", "r") as f:
         for line in f:
             cam_data = ast.literal_eval(line.strip())  # Convert string to dictionary
             extrinsics = get_extrinsic_matrix(cam_data)
@@ -137,8 +137,8 @@ if __name__=="__main__":
 
     T_inv = np.linalg.inv(T)
 
-    object = o3d.io.read_triangle_mesh("test/frame_0001.ply")
-    object.transform(T_inv)
+    object = o3d.io.read_triangle_mesh("frame_0001.ply")
+    #object.transform(T_inv)
 
     cams = create_cameras()
     ans = ray_cast(object, cams)
@@ -146,6 +146,9 @@ if __name__=="__main__":
     for a in ans:
         plt.imshow(a['t_hit'].numpy())
         plt.show()
+        
+    for c in cams:
+        o3d.visualization.draw_geometries([object, c])
 
     #all_hit_data = build_dict(1, ans, object)
     #print("Dictionary Created! ___________________________________________________________")
