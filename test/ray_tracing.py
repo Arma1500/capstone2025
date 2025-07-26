@@ -14,7 +14,7 @@ def create_cameras():
         
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
-        in_mat = in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
+        in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
 
         cam_tmp = {
             'ex_tensor' : o3d.core.Tensor(ex_mat),
@@ -28,12 +28,22 @@ def create_cameras():
 
     return cams
 
-def ray_cast(object, cams):
+def ray_cast(object, object_transform, cams):
 
     scene = o3d.t.geometry.RaycastingScene()
 
-    # I think this is where I adjust the location and stuff in the scene for the mesh
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
+    scene_mesh = o3d.t.geometry.TriangleMesh.from_legacy(object)
+    
+    # Convert transformation matrix to tensor format 
+    transform = np.array(object_transform, dtype=np.float32)
+    transform_tensor = o3d.core.Tensor(transform)
+    print(transform_tensor)
+    
+    scene_mesh.transform(transform_tensor) # Apply Transformation
+    print("Mesh Transformed?")
+
+    # Adding the mesh to the scene
+    scene.add_triangles(scene_mesh)
 
     ans = []
     for i, cam in enumerate(cams):
@@ -105,6 +115,32 @@ if __name__=="__main__":
     print("camera set up complete")
 
     # Load Meshes
+    charecter_transform = [
+        [
+            100.0,
+            6.69387958396328e-08,
+            3.4924592995366766e-08,
+            3.3527609843986284e-07
+        ],
+        [
+            -6.693880294506016e-08,
+            -100.0,
+            7.552700026280945e-06,
+            -2.1234151859061967e-07
+        ],
+        [
+            3.4924596548080444e-08,
+            7.5468788054422475e-06,
+            100.0,
+            -7.450579175838357e-08
+        ],
+        [
+            -0.0,
+            0.0,
+            -0.0,
+            1.0
+        ]
+    ]
     object = o3d.io.read_triangle_mesh("frame_0001.ply")
 
     # Open File
@@ -112,7 +148,7 @@ if __name__=="__main__":
 
     ## RAYCAST ______________________________________________
         # Set Up Ray Casting Scene and cast
-        cast_ans = ray_cast(object, cams)
+        cast_ans = ray_cast(object, charecter_transform, cams)
         print("ray casting complete")
 
         # Display Result

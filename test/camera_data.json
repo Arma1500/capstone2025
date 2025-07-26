@@ -47,8 +47,7 @@
                 ]
             ]
         }
-    }
-}{
+    },
     "Camera_2": {
         "extrinsic_mat": [
             [
@@ -97,8 +96,7 @@
                 ]
             ]
         }
-    }
-}{
+    },
     "Camera_3": {
         "extrinsic_mat": [
             [
@@ -147,8 +145,7 @@
                 ]
             ]
         }
-    }
-}{
+    },
     "Camera_4": {
         "extrinsic_mat": [
             [
