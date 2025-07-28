@@ -4,13 +4,19 @@ import matplotlib.pyplot as plt
 import json
 
 ## FUNCTIONS ____________________________________
-def create_cameras():
+def create_cameras(object_points):
     cams = []
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(object_points[0], object_points[1], object_points[2], c='green')
+    #plt.show()
+
     with open("camera_data.json") as f:
         cam_data = json.load(f)
 
     for i in range(4):
-        cam_info = cam_data[f"Camera_{i+1}"]
+        cam_info = cam_data[i]
         
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
@@ -26,7 +32,15 @@ def create_cameras():
 
         print(f"Camera_{i+1} loaded and appended")
 
-    return cams
+        ax.scatter(ex_mat[:, 0], ex_mat[:, 1], ex_mat[:, 2], c='red')
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        plt.show()
+
+    return ex_mat, cams
 
 def ray_cast(scene, cams):
     ans = []
@@ -51,6 +65,11 @@ def build_dict(ans_cast, object_mesh): # Added object_mesh parameter
 
     all_camera_hit_data = {} # Renamed for clarity to store all camera data
 
+    # Get triangle and vertex data from the passed object_mesh (which is already transformed)
+    triangle_ids = np.asarray(object_mesh.triangles)
+    vertices = np.asarray(object_mesh.vertices)
+    triangle_vertices = vertices[triangle_ids]
+
     for i, ans in enumerate(ans_cast):
         # Initialise new array for camera
         camera_hit_list = [] # List to store hit data for the current camera
@@ -58,16 +77,14 @@ def build_dict(ans_cast, object_mesh): # Added object_mesh parameter
         primitive_ids = ans["primitive_ids"].numpy().reshape((height_px, width_px ))
         primitive_uvs = ans["primitive_uvs"].numpy().reshape((height_px, width_px , 2))
 
-        # Get triangle and vertex data from the passed object_mesh (which is already transformed)
-        triangle_ids = np.asarray(object_mesh.triangles)
-        vertices = np.asarray(object_mesh.vertices)
-        triangle_vertices = vertices[triangle_ids]
+        count = 0
 
         for y in range(height_px):
             for x in range(width_px):
                 tri_id = primitive_ids[y,x]
 
                 if tri_id == o3d.t.geometry.RaycastingScene.INVALID_ID:
+                    count += 1
                     continue  # Skip rays that didn't hit anything
 
                 u, v = primitive_uvs[y, x]
@@ -89,72 +106,46 @@ def build_dict(ans_cast, object_mesh): # Added object_mesh parameter
                 })
         all_camera_hit_data[f"camera_{i}"] = camera_hit_list
 
-    return all_camera_hit_data # Return the dictionary containing all camera hit data
+    return camera_hit_list # Return the dictionary containing all camera hit data
 
 
 if __name__=="__main__":
     ## SETUP ________________________________________________
 
-    # Set Up Cameras
-    cams = create_cameras()
-    print("camera set up complete")
-
     # Load Meshes
-    charecter_transform = [
-        [
-            100.0,
-            6.69387958396328e-08,
-            3.4924592995366766e-08,
-            3.3527609843986284e-07
-        ],
-        [
-            -6.693880294506016e-08,
-            -100.0,
-            7.552700026280945e-06,
-            -2.1234151859061967e-07
-        ],
-        [
-            3.4924596548080444e-08,
-            7.5468788054422475e-06,
-            100.0,
-            -7.450579175838357e-08
-        ],
-        [
-            -0.0,
-            0.0,
-            -0.0,
-            1.0
-        ]
-    ]
     object = o3d.io.read_triangle_mesh("frame_0001.ply")
 
     # Set Up Ray Casting Scene and Add the Mesh
-    R_blender_to_o3d_mesh = np.array([
-        [1, 0, 0],
-        [0, 0, -1],
-        [0, 1, 0]
-    ], dtype=np.float64)
-    object.rotate(R_blender_to_o3d_mesh, center=object.get_center())
+    # R_blender_to_o3d_mesh = np.array([
+    #     [1, 0, 0],
+    #     [0, 0, -1],
+    #     [0, 1, 0]
+    # ], dtype=np.float64)
+    # object.rotate(R_blender_to_o3d_mesh, center=object.get_center())
+    center = object.get_center()
+
+    # Set Up Cameras
+    ex_mat, cams = create_cameras(center)
+    print("camera set up complete")
+    plt.show()
 
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
 
-    # Open File
-    with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
-
     ## RAYCAST ______________________________________________
-        # Set Up Ray Casting Scene and cast
-        cast_ans = ray_cast(object, cams)
-        print("ray casting complete")
+    # Set Up Ray Casting Scene and cast
+    cast_ans = ray_cast(scene, cams)
+    print("ray casting complete")
 
-        # Display Result
-        for a in cast_ans:
-            plt.imshow(a['t_hit'].numpy())
-            plt.show()
+    # Display Result
+    # for a in cast_ans:
+    #     plt.imshow(a['t_hit'].numpy())
+    #     plt.show()
 
-        # Save Result
-        data = build_dict(cast_ans)
-        json.dump(data, f, indent=2)
+    # Save Result
+    # data = build_dict(cast_ans, object)
+    # with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
+    #     json.dump(data, f, indent=2)
 
     print(f"File gt_{1} created!")
 
