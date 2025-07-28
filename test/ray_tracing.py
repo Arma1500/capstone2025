@@ -14,7 +14,7 @@ def create_cameras():
         
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
-        in_mat = in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
+        in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
 
         cam_tmp = {
             'ex_tensor' : o3d.core.Tensor(ex_mat),
@@ -100,6 +100,32 @@ if __name__=="__main__":
     print("camera set up complete")
 
     # Load Meshes
+    charecter_transform = [
+        [
+            100.0,
+            6.69387958396328e-08,
+            3.4924592995366766e-08,
+            3.3527609843986284e-07
+        ],
+        [
+            -6.693880294506016e-08,
+            -100.0,
+            7.552700026280945e-06,
+            -2.1234151859061967e-07
+        ],
+        [
+            3.4924596548080444e-08,
+            7.5468788054422475e-06,
+            100.0,
+            -7.450579175838357e-08
+        ],
+        [
+            -0.0,
+            0.0,
+            -0.0,
+            1.0
+        ]
+    ]
     object = o3d.io.read_triangle_mesh("frame_0001.ply")
 
     # Set Up Ray Casting Scene and Add the Mesh
@@ -117,7 +143,8 @@ if __name__=="__main__":
     with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
 
     ## RAYCAST ______________________________________________
-        cast_ans = ray_cast(scene, cams)
+        # Set Up Ray Casting Scene and cast
+        cast_ans = ray_cast(object, cams)
         print("ray casting complete")
 
         # Display Result
