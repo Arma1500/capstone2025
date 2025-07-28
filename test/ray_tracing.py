@@ -28,16 +28,10 @@ def create_cameras():
 
     return cams
 
-def ray_cast(object, cams):
-
-    scene = o3d.t.geometry.RaycastingScene()
-
-    # I think this is where I adjust the location and stuff in the scene for the mesh
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
-
+def ray_cast(scene, cams):
     ans = []
+    
     for i, cam in enumerate(cams):
-
         rays = o3d.t.geometry.RaycastingScene.create_rays_pinhole(
             intrinsic_matrix=cam['in_tensor'],
             extrinsic_matrix=cam['ex_tensor'],
@@ -50,29 +44,29 @@ def ray_cast(object, cams):
     
     return ans
 
-def build_dict(ans_cast): # I really hope this function is correct - I need to properly check it later
-
+def build_dict(ans_cast, object_mesh): # Added object_mesh parameter
     # should be based off the camera data but since its known its fine for now
     width_px = 1920
-    height_px = 1080 
+    height_px = 1080
 
-    hit_data = {}
+    all_camera_hit_data = {} # Renamed for clarity to store all camera data
+
     for i, ans in enumerate(ans_cast):
-        
-        # initialise new array for camera
-        hit_data = {f"camera_{i}" : []}
+        # Initialise new array for camera
+        camera_hit_list = [] # List to store hit data for the current camera
 
         primitive_ids = ans["primitive_ids"].numpy().reshape((height_px, width_px ))
         primitive_uvs = ans["primitive_uvs"].numpy().reshape((height_px, width_px , 2))
-        
-        triangle_ids = np.asarray(object.triangles)
-        vertices = np.asarray(object.vertices)
+
+        # Get triangle and vertex data from the passed object_mesh (which is already transformed)
+        triangle_ids = np.asarray(object_mesh.triangles)
+        vertices = np.asarray(object_mesh.vertices)
         triangle_vertices = vertices[triangle_ids]
 
         for y in range(height_px):
             for x in range(width_px):
                 tri_id = primitive_ids[y,x]
-                
+
                 if tri_id == o3d.t.geometry.RaycastingScene.INVALID_ID:
                     continue  # Skip rays that didn't hit anything
 
@@ -83,18 +77,19 @@ def build_dict(ans_cast): # I really hope this function is correct - I need to p
                 dv1 = float(np.linalg.norm(hit_point - v0))
                 dv2 = float(np.linalg.norm(hit_point - v1))
                 dv3 = float(np.linalg.norm(hit_point - v2))
-                
-                # add data to dict
-                hit_data[f"camera_{i}"].append({
+
+                # add data to list
+                camera_hit_list.append({
                     "pixel": [x, y],
-                    "triangle_id": int(tri_id), #oof I feel a bit iffy about this one
+                    "triangle_id": int(tri_id),
                     "hit": hit_point.tolist(),
                     "dv1": dv1,
                     "dv2": dv2,
                     "dv3": dv3
                 })
+        all_camera_hit_data[f"camera_{i}"] = camera_hit_list
 
-    return hit_data
+    return all_camera_hit_data # Return the dictionary containing all camera hit data
 
 
 if __name__=="__main__":
@@ -107,12 +102,22 @@ if __name__=="__main__":
     # Load Meshes
     object = o3d.io.read_triangle_mesh("frame_0001.ply")
 
+    # Set Up Ray Casting Scene and Add the Mesh
+    R_blender_to_o3d_mesh = np.array([
+        [1, 0, 0],
+        [0, 0, -1],
+        [0, 1, 0]
+    ], dtype=np.float64)
+    object.rotate(R_blender_to_o3d_mesh, center=object.get_center())
+
+    scene = o3d.t.geometry.RaycastingScene()
+    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
+
     # Open File
     with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
 
     ## RAYCAST ______________________________________________
-        # Set Up Ray Casting Scene and cast
-        cast_ans = ray_cast(object, cams)
+        cast_ans = ray_cast(scene, cams)
         print("ray casting complete")
 
         # Display Result
