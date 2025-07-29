@@ -44,7 +44,6 @@ for frame in range(scene.frame_start, scene.frame_end + 1):
         export_selected_objects=True,
         #export_uv=True,
         export_normals=True,
-        export_triangulated_mesh =True,
     )
     print(f"✅ Exported mesh for frame {frame} to {filepath}")
     
@@ -55,7 +54,3 @@ for frame in range(scene.frame_start, scene.frame_end + 1):
     frame_index += 1
 
 print("\n✅ Ground truth meshes exported successfully.")
-
-                            
-    
-    
