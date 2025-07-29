@@ -29,7 +29,7 @@ for frame in range(scene.frame_start, scene.frame_end + 1):
     mesh = eval_obj.to_mesh().copy()  # Make a copy to use in main database
     temp_mesh = bpy.data.objects.new(f"{obj.name}_Export", mesh)
 #    temp_mesh.location = (0, 0, 0)  # Center it
-#    temp_mesh.scale = (0.01, 0.01, 0.01)  # Adjust scale if needed
+    temp_mesh.scale = (0.01, 0.01, 0.01)  # Adjust scale if needed
 #    temp_mesh.rotation_euler = (1.57, 0, 0)
     bpy.context.collection.objects.link(temp_mesh)
     
@@ -44,6 +44,7 @@ for frame in range(scene.frame_start, scene.frame_end + 1):
         export_selected_objects=True,
         #export_uv=True,
         export_normals=True,
+        export_triangulated_mesh =True,
     )
     print(f"✅ Exported mesh for frame {frame} to {filepath}")
     
