@@ -6,11 +6,18 @@ import json
 ## FUNCTIONS ____________________________________
 def create_cameras():
     cams = []
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    object_points = np.asarray(object.vertices).T 
+    ax.scatter(object_points[0], object_points[1], object_points[2], c='green')
+    #plt.show()
+
     with open("camera_data.json") as f:
         cam_data = json.load(f)
 
     for i in range(4):
-        cam_info = cam_data[f"Camera_{i+1}"]
+        cam_info = cam_data[i]
         
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
@@ -26,28 +33,22 @@ def create_cameras():
 
         print(f"Camera_{i+1} loaded and appended")
 
+        cam_world = np.linalg.inv(ex_mat)
+        cam_pos_world = cam_world[:3,3]
+        ax.scatter(cam_pos_world[0], cam_pos_world[1], cam_pos_world[2], c='red')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    plt.show()
+
     return cams
 
-def ray_cast(object, object_transform, cams):
-
-    scene = o3d.t.geometry.RaycastingScene()
-
-    scene_mesh = o3d.t.geometry.TriangleMesh.from_legacy(object)
-    
-    # Convert transformation matrix to tensor format 
-    transform = np.array(object_transform, dtype=np.float32)
-    transform_tensor = o3d.core.Tensor(transform)
-    print(transform_tensor)
-    
-    scene_mesh.transform(transform_tensor) # Apply Transformation
-    print("Mesh Transformed?")
-
-    # Adding the mesh to the scene
-    scene.add_triangles(scene_mesh)
-
+def ray_cast(scene, cams):
     ans = []
+    
     for i, cam in enumerate(cams):
-
         rays = o3d.t.geometry.RaycastingScene.create_rays_pinhole(
             intrinsic_matrix=cam['in_tensor'],
             extrinsic_matrix=cam['ex_tensor'],
@@ -60,30 +61,31 @@ def ray_cast(object, object_transform, cams):
     
     return ans
 
-def build_dict(ans_cast): # I really hope this function is correct - I need to properly check it later
-
+def build_dict(ans_cast, object_mesh): # Added object_mesh parameter
     # should be based off the camera data but since its known its fine for now
     width_px = 1920
-    height_px = 1080 
+    height_px = 1080
 
-    hit_data = {}
+    # Get triangle and vertex data from the passed object_mesh (which is already transformed)
+    triangle_ids = np.asarray(object_mesh.triangles)
+    vertices = np.asarray(object_mesh.vertices)
+    triangle_vertices = vertices[triangle_ids]
+
     for i, ans in enumerate(ans_cast):
-        
-        # initialise new array for camera
-        hit_data = {f"camera_{i}" : []}
+        # Initialise new array for camera
+        camera_hit_list = [] # List to store hit data for the current camera
 
         primitive_ids = ans["primitive_ids"].numpy().reshape((height_px, width_px ))
         primitive_uvs = ans["primitive_uvs"].numpy().reshape((height_px, width_px , 2))
-        
-        triangle_ids = np.asarray(object.triangles)
-        vertices = np.asarray(object.vertices)
-        triangle_vertices = vertices[triangle_ids]
+
+        count = 0
 
         for y in range(height_px):
             for x in range(width_px):
                 tri_id = primitive_ids[y,x]
-                
+
                 if tri_id == o3d.t.geometry.RaycastingScene.INVALID_ID:
+                    count += 1
                     continue  # Skip rays that didn't hit anything
 
                 u, v = primitive_uvs[y, x]
@@ -93,74 +95,52 @@ def build_dict(ans_cast): # I really hope this function is correct - I need to p
                 dv1 = float(np.linalg.norm(hit_point - v0))
                 dv2 = float(np.linalg.norm(hit_point - v1))
                 dv3 = float(np.linalg.norm(hit_point - v2))
-                
-                # add data to dict
-                hit_data[f"camera_{i}"].append({
+
+                # add data to list
+                camera_hit_list.append({
                     "pixel": [x, y],
-                    "triangle_id": int(tri_id), #oof I feel a bit iffy about this one
+                    "triangle_id": int(tri_id),
                     "hit": hit_point.tolist(),
                     "dv1": dv1,
                     "dv2": dv2,
                     "dv3": dv3
                 })
 
-    return hit_data
+    return camera_hit_list # Return the dictionary containing all camera hit data
 
 
 if __name__=="__main__":
     ## SETUP ________________________________________________
 
+    # Load Meshes
+    object = o3d.io.read_triangle_mesh("frame_0001.ply")
+
+    # need to flip the y and z axis when converting from blender
+    R_blender_to_o3d_mesh = np.array([
+        [1, 0, 0],
+        [0, 0, -1],
+        [0, 1, 0]
+    ], dtype=np.float64)
+    object.rotate(R_blender_to_o3d_mesh, center=object.get_center())
+    
     # Set Up Cameras
     cams = create_cameras()
     print("camera set up complete")
 
-    # Load Meshes
-    charecter_transform = [
-        [
-            100.0,
-            6.69387958396328e-08,
-            3.4924592995366766e-08,
-            3.3527609843986284e-07
-        ],
-        [
-            -6.693880294506016e-08,
-            -100.0,
-            7.552700026280945e-06,
-            -2.1234151859061967e-07
-        ],
-        [
-            3.4924596548080444e-08,
-            7.5468788054422475e-06,
-            100.0,
-            -7.450579175838357e-08
-        ],
-        [
-            -0.0,
-            0.0,
-            -0.0,
-            1.0
-        ]
-    ]
-    object = o3d.io.read_triangle_mesh("frame_0001.ply")
-
-    # Open File
-    with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
-
     ## RAYCAST ______________________________________________
-        # Set Up Ray Casting Scene and cast
-        cast_ans = ray_cast(object, charecter_transform, cams)
-        print("ray casting complete")
+    # # Set Up Ray Casting Scene and cast
+    # scene = o3d.t.geometry.RaycastingScene()
+    # scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
+    # cast_ans = ray_cast(scene, cams)
+    # print("ray casting complete")
 
-        # Display Result
-        for a in cast_ans:
-            plt.imshow(a['t_hit'].numpy())
-            plt.show()
+    # # Display Result
+    # for a in cast_ans:
+    #     plt.imshow(a['t_hit'].numpy())
+    #     plt.show()
 
-        # Save Result
-        data = build_dict(cast_ans)
-        json.dump(data, f, indent=2)
-
-    print(f"File gt_{1} created!")
-
-    # might want to test loading the data and creating the point cloud with the open3d visulaisation thingy later just incase
-    
+    # # Save Result
+    # data = build_dict(cast_ans, object)
+    # with open(f"gt_{1}.json", "w") as f: # change to add loop when doing all of the objects
+    #     json.dump(data, f, indent=2)
+    # print(f"File gt_{1} created!")
