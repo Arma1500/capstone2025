@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import json
 
 
-with open('ground_truth/Camera_3/frame_0002.json', 'r') as f:
+with open('ground_truth/Camera_3/frame_0045.json', 'r') as f:
     camera_hit_list = json.load(f)
 
 # Extract just the hit points

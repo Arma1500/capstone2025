@@ -76,7 +76,7 @@ def ray_cast(scene, cams):
             height_px=cam["h"]
         )
 
-        print(f" Casting from camera {i} ...")
+        #print(f" Casting from camera {i} ...")
         
         cast_ans = scene.cast_rays(rays)
         ans.append(cast_ans)
@@ -153,9 +153,8 @@ if __name__=="__main__":
     mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
     for mesh_file in mesh_files:
         
-        
-        #if save_count == 2:
-        #    break # for debugging
+        if os.path.splitext(mesh_file)[0] < "frame_0045":
+            continue # for debugging
             
             
         mesh_path = os.path.join(mesh_folder, mesh_file)
@@ -188,7 +187,8 @@ if __name__=="__main__":
              file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
              with open(file_path, "w") as f:
                  json.dump(data, f, indent=2)
-             print(f"File {file_path} saved!")
-
+        
+        print(f"File {file_path} saved!")
         save_count += 1 # to check how many meshes we have done
+        
     print(f"{save_count} files saved")
