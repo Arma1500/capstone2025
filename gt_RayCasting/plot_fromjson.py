@@ -54,13 +54,13 @@ if __name__=="__main__":
     # transform all clouds to where the first cloud is
     center = pt_clds[0].get_center()
 
-    for i, pcd in enumerate(pt_clds):
+    for pcd in pt_clds:
         pcd.translate(center)
 
     merged_pcd = o3d.geometry.PointCloud()
     for pcd in pt_clds:
         merged_pcd += pcd
 
-    # Visualize
+    # Visualise
     downsampled_pcd = merged_pcd.voxel_down_sample(voxel_size=0.02)
     o3d.visualization.draw_geometries([downsampled_pcd])
