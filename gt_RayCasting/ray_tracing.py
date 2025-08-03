@@ -143,52 +143,90 @@ def load_mesh(path):
 
     return mesh, o_center
 
+def plot_cloud_from_json():
+
+    point_clouds = []
+
+    for i in range(4):
+        with open(f'ground_truth/Camera_{i+1}/frame_0001.json', 'r') as f:
+            camera_hit_list = json.load(f)
+
+        # Extract just the hit points
+        points = [entry['hit'] for entry in camera_hit_list if entry['hit'] is not None]
+
+        # Convert to Point Cloud
+        points_np = np.array(points, dtype=np.float32)
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points_np)
+
+        point_clouds.append(pcd)
+        print("pt cld added")
+
+    # transform all clouds to where the first cloud is
+    center = point_clouds[0].get_center()
+
+    for i, pcd in enumerate(point_clouds):
+        pcd.translate(center)
+
+    merged_pcd = o3d.geometry.PointCloud()
+    for pcd in point_clouds:
+        merged_pcd += pcd
+
+    # Visualize
+    downsampled_pcd = merged_pcd.voxel_down_sample(voxel_size=0.02)
+    o3d.visualization.draw_geometries([downsampled_pcd])
+    o3d.io.write_point_cloud("output_pointcloud.ply", downsampled_pcd)
+
 
 if __name__=="__main__":
-    ## SETUP ________________________________________________
-    save_count = 0
+    # ## SETUP ________________________________________________
+    # save_count = 0
 
-    # Load Meshes -----------------------
-    mesh_folder = os.path.abspath("../../simulation/meshes_dancer")
-    mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
-    for mesh_file in mesh_files:
+    # # Load Meshes -----------------------
+    # mesh_folder = os.path.abspath("../../simulation/meshes_dancer")
+    # mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
+    # for mesh_file in mesh_files:
         
-        if os.path.splitext(mesh_file)[0] < "frame_0045":
-            continue # for debugging
+    #     if os.path.splitext(mesh_file)[0] < "frame_0002":
+    #         continue # for debugging
             
             
-        mesh_path = os.path.join(mesh_folder, mesh_file)
+    #     mesh_path = os.path.join(mesh_folder, mesh_file)
         
-        object, o_center = load_mesh(mesh_path)
+    #     object, o_center = load_mesh(mesh_path)
         
-        # Set Up Cameras ------------------
-        cams = create_cameras(o_center)
+    #     # Set Up Cameras ------------------
+    #     cams = create_cameras(o_center)
 
-        # RAYCAST ______________________________________________
-        # Set Up Ray Casting Scene and cast
-        scene = o3d.t.geometry.RaycastingScene()
-        scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
-        cast_ans = ray_cast(scene, cams)
-        print("ray casting complete!")
+    #     # RAYCAST ______________________________________________
+    #     # Set Up Ray Casting Scene and cast
+    #     scene = o3d.t.geometry.RaycastingScene()
+    #     scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
+    #     cast_ans = ray_cast(scene, cams)
+    #     print("ray casting complete!")
         
-        for i, a in enumerate(cast_ans):
-            ## Display Result - for debugging ------------------
-            #plt.imshow(a['t_hit'].numpy())
-            #plt.title(f"cam{i+1}")
-            #plt.xlabel("X-axis")
-            #plt.ylabel("Y-axis")
-            #plt.show()
+    #     for i, a in enumerate(cast_ans):
+    #         ## Display Result - for debugging ------------------
+    #         #plt.imshow(a['t_hit'].numpy())
+    #         #plt.title(f"cam{i+1}")
+    #         #plt.xlabel("X-axis")
+    #         #plt.ylabel("Y-axis")
+    #         #plt.show()
 
-            # Save Result -------------------------
-             data = build_dict(a, object)
-             cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
-             os.makedirs(cam_path, exist_ok=True)
+    #         # Save Result -------------------------
+    #          data = build_dict(a, object)
+    #          cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
+    #          os.makedirs(cam_path, exist_ok=True)
 
-             file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
-             with open(file_path, "w") as f:
-                 json.dump(data, f, indent=2)
+    #          file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
+    #          with open(file_path, "w") as f:
+    #              json.dump(data, f, indent=2)
         
-        print(f"File {file_path} saved!")
-        save_count += 1 # to check how many meshes we have done
-        
-    print(f"{save_count} files saved")
+    #     print(f"File {file_path} saved!")
+    #     save_count += 1 # to check how many meshes we have done
+    
+    # print(f"{save_count} files saved")
+
+## ----------------------------------------------------------------------------------------------------------------
+    ## DISPLAY RESULT OF FIRST MESH - make sure to comment out the above code
+    plot_cloud_from_json()
