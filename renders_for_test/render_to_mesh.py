@@ -6,23 +6,23 @@ import json
 import os
 
 # FUNCTIONS -----------------------------------
-def look_at(eye, target, up):
-    forward = (target - eye)
-    forward /= np.linalg.norm(forward)
+# def look_at(eye, target, up):
+#     forward = (target - eye)
+#     forward /= np.linalg.norm(forward)
 
-    right = np.cross(up, forward)
-    right /= np.linalg.norm(right)
+#     right = np.cross(up, forward)
+#     right /= np.linalg.norm(right)
 
-    true_up = np.cross(forward, right)
+#     true_up = np.cross(forward, right)
 
-    R = np.stack([right, true_up, forward], axis=1)
-    T = eye.reshape(3, 1)
+#     R = np.stack([right, true_up, forward], axis=1)
+#     T = eye.reshape(3, 1)
 
-    extrinsic = np.eye(4)
-    extrinsic[:3, :3] = R
-    extrinsic[:3, 3] = T[:, 0]
+#     extrinsic = np.eye(4)
+#     extrinsic[:3, :3] = R
+#     extrinsic[:3, 3] = T[:, 0]
 
-    return extrinsic
+#     return extrinsic
 
 # Load data from "camera_data.json"
 def get_cam_data(directory):
@@ -37,12 +37,12 @@ def get_cam_data(directory):
          ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float64) # maybe convert to trajectory later?
          ex_world = np.linalg.inv(ex_mat)
 
-         R_blender_to_o3d_mesh = np.array([
-             [1, 0, 0],
-             [0, 0, -1],
-             [0, 1, 0]
-             ], dtype=np.float64)
-         ex_world = ex_mat @ R_blender_to_o3d_mesh
+        #  R_blender_to_o3d_mesh = np.array([
+        #      [1, 0, 0],
+        #      [0, 0, -1],
+        #      [0, 1, 0]
+        #      ], dtype=np.float64)
+        #  ex_world = ex_mat @ R_blender_to_o3d_mesh
         
         #print(f"ex_world: {ex_world}")
         #  cam_position = np.linalg.inv(ex_mat)[:3, 3]  # extract camera position in world coords
@@ -69,10 +69,10 @@ def get_cam_data(directory):
     return data
 
 def load_normalized_depth(path):
+    max_depth = 5.0
     depth = cv2.imread(path, cv2.IMREAD_UNCHANGED).astype(np.float32)
-    if depth.ndim == 3:
-        depth = depth[:, :, 0]
-    depth = (depth / 255.0) * 3.0
+    depth = depth[:, :, 0] 
+    depth = (depth / 255.0) * max_depth
     return o3d.geometry.Image(depth)
 
 
@@ -90,7 +90,7 @@ if __name__=="__main__":
         depth_img_path = os.path.join(dir, f"renders/Camera_{i+1}/depth_png/depth_norm_0001.png")
         rgb_img_path = os.path.join(dir, f"renders/Camera_{i+1}/rgb/rgb_0001.png")
         
-        depth_img = load_normalized_depth(depth_img_path)
+        depth_img =load_normalized_depth(depth_img_path)
         rgb_img = o3d.io.read_image(rgb_img_path)
         
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, 1.0, 3.0, False) 
@@ -103,7 +103,9 @@ if __name__=="__main__":
         # flip_mat = np.eye(4)
         # flip_mat[2, 2] = -1
         # transform = cam_data[0]['extrinsic'] @ flip_mat
-        # pcd.transform(flip_mat)
+        
+        #downsampled_pcd = pcd.voxel_down_sample(voxel_size=0.02)
+        #o3d.visualization.draw_geometries([pcd])
 
         pcds.append(pcd)
          
