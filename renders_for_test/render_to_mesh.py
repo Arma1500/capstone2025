@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import json
 import os
 
+import polyscope as ps
+ps.init()
+
 # FUNCTIONS -----------------------------------
 # def look_at(eye, target, up):
 #     forward = (target - eye)
@@ -28,7 +31,7 @@ import os
 def get_cam_data(directory):
     data = []
 
-    with open(os.path.join(directory, "../gt_RayCasting/camera_data.json")) as f:
+    with open(os.path.join(directory, "../gt_RayCasting/camera_data2.json")) as f:
         all_data = json.load(f)
 
     for i in range(4):
@@ -83,6 +86,7 @@ if __name__=="__main__":
 
     
     pcds = []
+    frames = []
     for i in range(4):
         intrinsics = cam_data[i]['intrinsic']
         extrinsics = cam_data[i]['extrinsic']
@@ -90,11 +94,12 @@ if __name__=="__main__":
         depth_img_path = os.path.join(dir, f"renders/Camera_{i+1}/depth_png/depth_norm_0001.png")
         rgb_img_path = os.path.join(dir, f"renders/Camera_{i+1}/rgb/rgb_0001.png")
         
-        depth_img =load_normalized_depth(depth_img_path)
+        #depth_img =load_normalized_depth(depth_img_path) # using opencv
+        depth_img = o3d.io.read_image(depth_img_path)
         rgb_img = o3d.io.read_image(rgb_img_path)
         
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, 1.0, 3.0, False) 
-        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics)#, depth_trunc=3, stride=1)
+        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics, extrinsics)#, depth_trunc=3, stride=1)
         # this is without applying the camera extrinsics anywhere
 
         #print("point_clouds created")
@@ -103,24 +108,59 @@ if __name__=="__main__":
         # flip_mat = np.eye(4)
         # flip_mat[2, 2] = -1
         # transform = cam_data[0]['extrinsic'] @ flip_mat
+        #pcd = pcd.rotate(extrinsics[:3, :3])
+        #pcd = pcd.translate((0, 0, 0))
+
+        # flip_y = np.array([[1,  0,  0],
+        #               [0, -1,  0],
+        #               [0,  0, 1]], dtype=np.float32)
+        # flip_y_4x4 = np.eye(4)
+        # flip_y_4x4[:3, :3] = flip_y
+
+        # theta = np.deg2rad(-45)
+        # Rx = np.eye(4)
+        # Rx[1, 1] = np.cos(theta)
+        # Rx[1, 2] = -np.sin(theta)
+        # Rx[2, 1] = np.sin(theta)
+        # Rx[2, 2] = np.cos(theta)
+
+        # transform = extrinsics @ flip_y_4x4
+
+        # transform2 = transform @ Rx
         
-        #downsampled_pcd = pcd.voxel_down_sample(voxel_size=0.02)
-        #o3d.visualization.draw_geometries([pcd])
+        #pcd = pcd.transform(transform)
+        #pcd = pcd.rotate(transform2[:3, :3])
+
+        #pcd = pcd.transform(extrinsics)
 
         pcds.append(pcd)
+        #downsampled_pcd = pcd.voxel_down_sample(voxel_size=0.02)
+        #o3d.visualization.draw_geometries([downsampled_pcd])
+        #frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2)#.transform(extrinsics)
+        #o3d.visualization.draw_geometries([frame, downsampled_pcd])
+        
+        #frames.append(frame)
          
-    # Merge into one
-    merged_pcd = o3d.geometry.PointCloud()
-    for pcd in pcds:
-        merged_pcd += pcd
+    # # Merge into one
+    # merged_pcd = o3d.geometry.PointCloud()
+    # for pcd in pcds:
+    #     merged_pcd += pcd
 
-    # Visualise
-    downsampled_pcd = merged_pcd.voxel_down_sample(voxel_size=0.02)
-    o3d.visualization.draw_geometries([downsampled_pcd])
+    # # Visualise
+    # downsampled_pcd = merged_pcd.voxel_down_sample(voxel_size=0.02)
+    # o3d.visualization.draw_geometries(frames + [downsampled_pcd])
 
 # for cam in cam_data:
 #     frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.3)
 #     frame.transform(cam['extrinsic'])
 #     o3d.visualization.draw_geometries([frame, *pcds])
-frames = [o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2).transform(cam['extrinsic']) for cam in cam_data]
-o3d.visualization.draw_geometries(frames + [downsampled_pcd])
+# frames = [o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2).transform(cam['extrinsic']) for cam in cam_data]
+# o3d.visualization.draw_geometries(frames + [downsampled_pcd])
+
+for i, pcd in enumerate(pcds):
+    downsampled = pcd.voxel_down_sample(voxel_size=0.01)
+    points = np.asarray(downsampled.points) #downsampled.points)
+    if points.size > 0:
+        ps.register_point_cloud(f"Camera {i+1} points", points)
+
+ps.show()

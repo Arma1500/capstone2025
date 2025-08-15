@@ -5,34 +5,33 @@ import json
 import os
 
 ## FUNCTIONS ____________________________________
-def look_at(cam_pos, target, up=np.array([0, 0, 1])):
-    # change camera extrinsic mat to look at mesh 
-    # - need to learn how this is done so I can put it in the blender one
-    forward = target - cam_pos
-    forward /= np.linalg.norm(forward)
-    right = np.cross(up, forward)
-    right /= np.linalg.norm(right)
-    true_up = np.cross(forward, right)
+# def look_at(cam_pos, target, up=np.array([0, 0, 1])):
+#     # change camera extrinsic mat to look at mesh 
+#     forward = target - cam_pos
+#     forward /= np.linalg.norm(forward)
+#     right = np.cross(up, forward)
+#     right /= np.linalg.norm(right)
+#     true_up = np.cross(forward, right)
     
-    R = np.stack([right, true_up, forward], axis=1)
-    t = -R.T @ cam_pos
+#     R = np.stack([right, true_up, forward], axis=1)
+#     t = -R.T @ cam_pos
     
-    extrinsic = np.eye(4)
-    extrinsic[:3, :3] = R.T
-    extrinsic[:3, 3] = t
+#     extrinsic = np.eye(4)
+#     extrinsic[:3, :3] = R.T
+#     extrinsic[:3, 3] = t
     
-    return extrinsic
+#     return extrinsic
 
 def create_cameras(target_center):
     cams = []
 
     # plotting camera and mesh location for debugging
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # object_points = np.asarray(object.vertices).T 
-    # ax.scatter(object_points[0], object_points[1], object_points[2], c='green')
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    object_points = np.asarray(object.vertices).T 
+    ax.scatter(object_points[0], object_points[1], object_points[2], c='green')
 
-    with open("camera_data.json") as f:
+    with open("gt_RayCasting/camera_data4.json") as f:
         cam_data = json.load(f)
 
     for i in range(4):
@@ -41,26 +40,27 @@ def create_cameras(target_center):
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
         cam_world = np.linalg.inv(ex_mat)
-        cam_pos_world = cam_world[:3,3]
-        ex_mat_look = look_at(cam_pos_world, np.array(target_center)) # need to change mat to look at object
+        cam_pos_world = ex_mat[:3,3]
+        #ex_mat_look = look_at(cam_pos_world, np.array(target_center)) # need to change mat to look at object
         
         in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
 
         cam_tmp = {
-            'ex_tensor' : o3d.core.Tensor(ex_mat_look),
+            'ex_tensor' : o3d.core.Tensor(cam_world),
             'in_tensor' : o3d.core.Tensor(in_mat),
             'w' : cam_info["intrinsics"]["width"],
             'h' : cam_info["intrinsics"]["height"]
         }
         cams.append(cam_tmp)
 
-        # print(f"Camera_{i+1} loaded and appended")
-        # # part of the plotting
-        # ax.scatter(cam_pos_world[0], cam_pos_world[1], cam_pos_world[2], c='red')
-    # ax.set_xlabel('X')
-    # ax.set_ylabel('Y')
-    # ax.set_zlabel('Z')
-    # plt.show()
+        print(f"Camera_{i+1} loaded and appended")
+        # part of the plotting
+        ax.scatter(cam_pos_world[0], cam_pos_world[1], cam_pos_world[2], c='red')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    plt.show()
 
     return cams
 
@@ -136,10 +136,10 @@ def load_mesh(path):
     # need to flip the y and z axis when converting from blender
     R_blender_to_o3d_mesh = np.array([
         [1, 0, 0],
-        [0, 0, -1],
-        [0, 1, 0]
+        [0, -1, 0],
+        [0, 0, -1]
     ], dtype=np.float64)
-    mesh.rotate(R_blender_to_o3d_mesh, center=o_center)
+    mesh = mesh.rotate(R_blender_to_o3d_mesh)
 
     return mesh, o_center
 
@@ -179,54 +179,53 @@ def plot_cloud_from_json():
 
 
 if __name__=="__main__":
-    # ## SETUP ________________________________________________
-    # save_count = 0
+    ## SETUP ________________________________________________
+    save_count = 0
 
-    # # Load Meshes -----------------------
-    # mesh_folder = os.path.abspath("../../simulation/meshes_dancer")
-    # mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
-    # for mesh_file in mesh_files:
+    # Load Meshes -----------------------
+    mesh_folder = os.path.abspath("../simulation/meshes_dancer")
+    mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
+    for mesh_file in mesh_files:
         
-    #     if os.path.splitext(mesh_file)[0] < "frame_0002":
-    #         continue # for debugging
-            
-            
-    #     mesh_path = os.path.join(mesh_folder, mesh_file)
+        if os.path.splitext(mesh_file)[0] >= "frame_0002":
+            break # for debugging
+                        
+        mesh_path = os.path.join(mesh_folder, mesh_file)
         
-    #     object, o_center = load_mesh(mesh_path)
+        object, o_center = load_mesh(mesh_path)
         
-    #     # Set Up Cameras ------------------
-    #     cams = create_cameras(o_center)
+        # Set Up Cameras ------------------
+        cams = create_cameras(o_center)
 
-    #     # RAYCAST ______________________________________________
-    #     # Set Up Ray Casting Scene and cast
-    #     scene = o3d.t.geometry.RaycastingScene()
-    #     scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
-    #     cast_ans = ray_cast(scene, cams)
-    #     print("ray casting complete!")
+        # RAYCAST ______________________________________________
+        # Set Up Ray Casting Scene and cast
+        scene = o3d.t.geometry.RaycastingScene()
+        scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(object))
+        cast_ans = ray_cast(scene, cams)
+        print("ray casting complete!")
         
-    #     for i, a in enumerate(cast_ans):
-    #         ## Display Result - for debugging ------------------
-    #         #plt.imshow(a['t_hit'].numpy())
-    #         #plt.title(f"cam{i+1}")
-    #         #plt.xlabel("X-axis")
-    #         #plt.ylabel("Y-axis")
-    #         #plt.show()
+        for i, a in enumerate(cast_ans):
+            # Display Result - for debugging ------------------
+            plt.imshow(a['t_hit'].numpy())
+            plt.title(f"cam{i+1}")
+            plt.xlabel("X-axis")
+            plt.ylabel("Y-axis")
+            plt.show()
 
-    #         # Save Result -------------------------
-    #          data = build_dict(a, object)
-    #          cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
-    #          os.makedirs(cam_path, exist_ok=True)
+            # Save Result -------------------------
+        #      data = build_dict(a, object)
+        #      cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
+        #      os.makedirs(cam_path, exist_ok=True)
 
-    #          file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
-    #          with open(file_path, "w") as f:
-    #              json.dump(data, f, indent=2)
+        #      file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
+        #      with open(file_path, "w") as f:
+        #          json.dump(data, f, indent=2)
         
-    #     print(f"File {file_path} saved!")
-    #     save_count += 1 # to check how many meshes we have done
+        # print(f"File {file_path} saved!")
+        save_count += 1 # to check how many meshes we have done
     
-    # print(f"{save_count} files saved")
+    print(f"{save_count} files saved")
 
 ## ----------------------------------------------------------------------------------------------------------------
     ## DISPLAY RESULT OF FIRST MESH - make sure to comment out the above code
-    plot_cloud_from_json()
+    #plot_cloud_from_json()
