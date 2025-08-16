@@ -5,22 +5,22 @@ import json
 import os
 
 ## FUNCTIONS ____________________________________
-# def look_at(cam_pos, target, up=np.array([0, 0, 1])):
-#     # change camera extrinsic mat to look at mesh 
-#     forward = target - cam_pos
-#     forward /= np.linalg.norm(forward)
-#     right = np.cross(up, forward)
-#     right /= np.linalg.norm(right)
-#     true_up = np.cross(forward, right)
+def look_at(cam_pos, target=np.array([0,0,0]), up=np.array([0, 0, 1])):
+    # change camera extrinsic mat to look at mesh 
+    forward = target - cam_pos
+    forward /= np.linalg.norm(forward)
+    right = np.cross(up, forward)
+    right /= np.linalg.norm(right)
+    true_up = np.cross(forward, right)
     
-#     R = np.stack([right, true_up, forward], axis=1)
-#     t = -R.T @ cam_pos
+    R = np.stack([right, true_up, forward], axis=1)
+    t = -R.T @ cam_pos
     
-#     extrinsic = np.eye(4)
-#     extrinsic[:3, :3] = R.T
-#     extrinsic[:3, 3] = t
+    extrinsic = np.eye(4)
+    extrinsic[:3, :3] = R.T
+    extrinsic[:3, 3] = t
     
-#     return extrinsic
+    return extrinsic
 
 def create_cameras(target_center):
     cams = []
@@ -31,7 +31,7 @@ def create_cameras(target_center):
     object_points = np.asarray(object.vertices).T 
     ax.scatter(object_points[0], object_points[1], object_points[2], c='green')
 
-    with open("gt_RayCasting/camera_data4.json") as f:
+    with open("gt_RayCasting/camera_data2.json") as f:
         cam_data = json.load(f)
 
     for i in range(4):
@@ -40,13 +40,13 @@ def create_cameras(target_center):
         # Get Matricies
         ex_mat = np.array(cam_info["extrinsic_mat"], dtype=np.float32)
         cam_world = np.linalg.inv(ex_mat)
-        cam_pos_world = ex_mat[:3,3]
-        #ex_mat_look = look_at(cam_pos_world, np.array(target_center)) # need to change mat to look at object
+        cam_pos_world = cam_world[:3,3]
+        ex_mat_look = look_at(cam_pos_world) # need to change mat to look at object
         
         in_mat = np.array(cam_info["intrinsics"]["intrinsic_matrix"], dtype=np.float32)
 
         cam_tmp = {
-            'ex_tensor' : o3d.core.Tensor(cam_world),
+            'ex_tensor' : o3d.core.Tensor(ex_mat_look),
             'in_tensor' : o3d.core.Tensor(in_mat),
             'w' : cam_info["intrinsics"]["width"],
             'h' : cam_info["intrinsics"]["height"]
@@ -183,7 +183,7 @@ if __name__=="__main__":
     save_count = 0
 
     # Load Meshes -----------------------
-    mesh_folder = os.path.abspath("../simulation/meshes_dancer")
+    mesh_folder = os.path.abspath("/home/humense/arhma-capstone/simulation/ground_truth2/mesh_dancer")
     mesh_files = sorted([f for f in os.listdir(mesh_folder) if f.endswith('.ply')])
     for mesh_file in mesh_files:
         
@@ -213,15 +213,14 @@ if __name__=="__main__":
             plt.show()
 
             # Save Result -------------------------
-        #      data = build_dict(a, object)
-        #      cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
-        #      os.makedirs(cam_path, exist_ok=True)
-
-        #      file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
-        #      with open(file_path, "w") as f:
-        #          json.dump(data, f, indent=2)
+            data = build_dict(a, object)
+            cam_path = os.path.join(f"ground_truth/Camera_{i+1}")
+            os.makedirs(cam_path, exist_ok=True)
+            file_path = os.path.join(cam_path, (os.path.splitext(mesh_file)[0] + ".json"))
+            with open(file_path, "w") as f: 
+                json.dump(data, f, indent=2)
         
-        # print(f"File {file_path} saved!")
+        print(f"File {file_path} saved!")
         save_count += 1 # to check how many meshes we have done
     
     print(f"{save_count} files saved")
