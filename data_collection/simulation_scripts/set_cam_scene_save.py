@@ -155,7 +155,7 @@ cameras = add_cameras()
 bpy.context.view_layer.update()
 
 output_base_path = "C:/Work/Capstone/"  # Change to your preferred path
-output_path_cam = os.path.join(output_base_path, "camera_data2.json")
+output_path_cam = os.path.join(output_base_path, "camera_data_new.json")
 data_list = []
 
 for cam in cameras:
