@@ -14,10 +14,10 @@ Data Collection
 * Ground Truth Data for each frame saved as *.json* file
 
 3. Converting Depth images to Point Cloud:
+* Obtaining normalised depth values from depth images with OpenCV
 * Convert to point cloud with Open3D using camera intrinsics
 * Transform using camera extrinsics
 
 ## Issues
-When converting RGBD images to point clouds:
-* clouds are flipped and scaled incorrectly
+
 

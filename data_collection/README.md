@@ -1,2 +1,0 @@
-# raytracing folder also has the converting depth images to point clouds code in it - everything is in raytracing.ipynb
-* renders_to_pcd just has some of my old code still - along with some of the depth images, but raytracing.ipynb should be picking them from the folder properly
