@@ -1,6 +1,5 @@
 import open3d as o3d
 import numpy as np
-import matplotlib.pyplot as plt
 import math
 import json
 import cv2
@@ -83,9 +82,6 @@ def img_to_pcd(cams, dir, frame_name, min_depth, max_depth):
         extrinsics = cam['ex_tensor'].numpy() # using global system
         extrinsics = extrinsics.astype(np.float64)
 
-        cam_pos = extrinsics[:3, 3].tolist()
-        print(f"cam_{i+1}: {cam_pos}")
-
         intrinsics = cam['in_tensor'].numpy()
         intrinsics = intrinsics.astype(np.float64)
 
@@ -135,7 +131,7 @@ def polyscope_cam_params(camera_data):
 if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
-    camera_data_path = 'data_generation/data_generation/blender_camera_data.json'
+    camera_data_path = 'blender_camera_data.json'
     renders_path = '/media/humense/Expansion/Capstone/renders'
 
     output_path = '/media/humense/Expansion/Capstone/render_pcds'
@@ -147,10 +143,10 @@ if __name__=="__main__":
     min_depth=4.5
     max_depth=5.5
 
-    start_frame = 1
-    end_frame = 20
+    start_frame = 81
+    end_frame = 100
     frames = [str(i).zfill(4) for i in range(start_frame, end_frame + 1)]
-    print(frames)
+    
     for frame in frames:
         print(f"Processing frame: {frame}")
         pcds = img_to_pcd(cams_data, renders_path, frame, min_depth, max_depth)
@@ -161,7 +157,7 @@ if __name__=="__main__":
             merged_pcd += pcd
 
         # Save the merged point cloud
-        output_filename = os.path.join(output_path, f"pointcloud_{frame}.pcd")
+        output_filename = os.path.join(output_path, f"render_frame_{frame}.ply")
         o3d.io.write_point_cloud(output_filename, merged_pcd)
         print(f"Saved point cloud to: {output_filename}")
 
@@ -184,3 +180,5 @@ if __name__=="__main__":
     # # ----------------------------------------------------------------------
 
     
+#### PROBLEM: She is moving towards one camera and away from the other so the front and back cameras don't capture the depth
+#### properly. I have to adjust the scale later

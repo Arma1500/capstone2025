@@ -5,8 +5,8 @@ import math
 import json
 import os
 
-import polyscope as ps
-ps.init()
+# import polyscope as ps
+# ps.init()
 
 # UTILITY FUNCTIONS
 # Initialise Cameras ---------------------------------------------------------------------
@@ -124,26 +124,26 @@ def build_dict(ans, mesh):
 
 # VIS FUNCTIONS FOR DEBUGGING
 # Polyscope scene visualisation ------------------------------------------------------------
-def polyscope_cam_params(camera_data):
-    ex_world = np.linalg.inv(camera_data['ex_tensor'].numpy())
-    in_mat = camera_data['in_tensor'].numpy()
-    w = camera_data['w']
-    h = camera_data['h']
+# def polyscope_cam_params(camera_data):
+#     ex_world = np.linalg.inv(camera_data['ex_tensor'].numpy())
+#     in_mat = camera_data['in_tensor'].numpy()
+#     w = camera_data['w']
+#     h = camera_data['h']
 
-    # Intrinsics
-    fy = in_mat[1, 1]
-    fov_vertical_rad = 2 * math.atan(h / (2 * fy))
-    fov_vertical_deg = math.degrees(fov_vertical_rad)
-    aspect_ratio = w / h
-    intrinsics = ps.CameraIntrinsics(fov_vertical_deg=fov_vertical_deg, aspect=aspect_ratio)
+#     # Intrinsics
+#     fy = in_mat[1, 1]
+#     fov_vertical_rad = 2 * math.atan(h / (2 * fy))
+#     fov_vertical_deg = math.degrees(fov_vertical_rad)
+#     aspect_ratio = w / h
+#     intrinsics = ps.CameraIntrinsics(fov_vertical_deg=fov_vertical_deg, aspect=aspect_ratio)
 
-    # Extrinsics
-    cam_pos = ex_world[:3, 3].tolist() # numpy array dosn't work for cam extrinsics in polyscope
-    look_dir = (ex_world[:3, 2] / np.linalg.norm(ex_world[:3, 2])).tolist()
-    up_dir = (ex_world[:3, 1] / np.linalg.norm(ex_world[:3, 1])).tolist()
-    extrinsics = ps.CameraExtrinsics(root=cam_pos, look_dir=look_dir, up_dir=up_dir)
+#     # Extrinsics
+#     cam_pos = ex_world[:3, 3].tolist() # numpy array dosn't work for cam extrinsics in polyscope
+#     look_dir = (ex_world[:3, 2] / np.linalg.norm(ex_world[:3, 2])).tolist()
+#     up_dir = (ex_world[:3, 1] / np.linalg.norm(ex_world[:3, 1])).tolist()
+#     extrinsics = ps.CameraExtrinsics(root=cam_pos, look_dir=look_dir, up_dir=up_dir)
 
-    return ps.CameraParameters(intrinsics, extrinsics)
+#     return ps.CameraParameters(intrinsics, extrinsics)
 
 # Plot from .JSON -----------------------------------------------------------------------
 def plot_from_json(path):
@@ -166,7 +166,7 @@ def plot_from_json(path):
 if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
-    camera_data_path = 'data_generation/data_generation/blender_camera_data.json'
+    camera_data_path = 'blender_camera_data.json'
     meshes_path = '/media/humense/Expansion/Capstone/meshes'
 
     output_path = '/media/humense/Expansion/Capstone/ground_truth'
@@ -179,9 +179,12 @@ if __name__=="__main__":
     mesh_files = sorted([f for f in os.listdir(meshes_path) if f.endswith('.ply')])
     for mesh_file in mesh_files:
         
-        if os.path.splitext(mesh_file)[0] != "frame_0002":
-            break # for debugging
+        if "frame_0002" < os.path.splitext(mesh_file)[0] <= "frame_0010":
+            pass # for debugging
+        else:
+            continue
                         
+        print(mesh_file)
         mesh_path = os.path.join(meshes_path, mesh_file)
         mesh = o3d.io.read_triangle_mesh(mesh_path)
 
