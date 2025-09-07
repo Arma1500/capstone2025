@@ -75,11 +75,11 @@ def load_normalized_depth(path, min_depth, max_depth):
     return o3d.geometry.Image(depth)
 
 # Convert RGB and Depth Image to combined Point Cloud -------------------------------------------
-def img_to_pcd(cams, dir='renders_scaled', min_depth=4.5, max_depth=5.5):
+def img_to_pcd(cams, dir, frame_name, min_depth, max_depth):
     
     pcds = []
     for i, cam in enumerate(cams):
-        #extrinsics = np.linalg.inv(cam['ex_tensor'].numpy()) # using cam local
+        # get camera intrinsics and extrinsics
         extrinsics = cam['ex_tensor'].numpy() # using global system
         extrinsics = extrinsics.astype(np.float64)
 
@@ -93,12 +93,14 @@ def img_to_pcd(cams, dir='renders_scaled', min_depth=4.5, max_depth=5.5):
             cam['w'], cam['h'], intrinsics
         )
 
-        depth_img_path = os.path.join(dir, f"Camera_{i+1}/depth_png/depth_norm_0001.png")
-        rgb_img_path = os.path.join(dir, f"Camera_{i+1}/rgb/rgb_0001.png")
+        # access depth image
+        depth_img_path = os.path.join(dir, f"Camera_{i+1}/depth_png/depth_norm_{frame_name}.png")
+        rgb_img_path = os.path.join(dir, f"Camera_{i+1}/rgb/rgb_{frame_name}.png")
             
         depth_img =load_normalized_depth(depth_img_path, min_depth, max_depth) # using opencv
         rgb_img = o3d.io.read_image(rgb_img_path)
         
+        # create point cloud
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, 1.0, max_depth, False) 
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, cam_intrinsics, extrinsics)
 
@@ -126,8 +128,59 @@ def polyscope_cam_params(camera_data):
     up_dir = (ex_world[:3, 1] / np.linalg.norm(ex_world[:3, 1])).tolist()
     extrinsics = ps.CameraExtrinsics(root=cam_pos, look_dir=look_dir, up_dir=up_dir)
 
-    print(f"cam_pos: {cam_pos}")
-    print(f"look_dir: {look_dir}")
-    print(f"up_dir: {up_dir}")
-
     return ps.CameraParameters(intrinsics, extrinsics)
+
+
+# MAIN FUNCTION
+if __name__=="__main__":
+
+    # File Path Set Up -------------------------------------------------------------------------
+    camera_data_path = 'data_generation/data_generation/blender_camera_data.json'
+    renders_path = '/media/humense/Expansion/Capstone/renders'
+
+    output_path = '/media/humense/Expansion/Capstone/render_pcds'
+
+    # Point Cloud Generation --------------------------------------------------------------------
+    cams_data = read_cam_data(camera_data_path)
+
+    # same as the scale used for the depth renders from blender scene
+    min_depth=4.5
+    max_depth=5.5
+
+    start_frame = 1
+    end_frame = 20
+    frames = [str(i).zfill(4) for i in range(start_frame, end_frame + 1)]
+    print(frames)
+    for frame in frames:
+        print(f"Processing frame: {frame}")
+        pcds = img_to_pcd(cams_data, renders_path, frame, min_depth, max_depth)
+
+        # Merge the point clouds from all cameras
+        merged_pcd = o3d.geometry.PointCloud()
+        for pcd in pcds:
+            merged_pcd += pcd
+
+        # Save the merged point cloud
+        output_filename = os.path.join(output_path, f"pointcloud_{frame}.pcd")
+        o3d.io.write_point_cloud(output_filename, merged_pcd)
+        print(f"Saved point cloud to: {output_filename}")
+
+    # # display for debugging ----------------------------------------------
+    # # display cameras in polyscope scene
+    # for i, cam in enumerate(cams_data):
+    #     print(f"Camera_{i+1} --------------------------")
+    #     params = polyscope_cam_params(cam)
+    #     cam = ps.register_camera_view(f"Camera {i+1}", params)
+
+    # # displaying the last pointcloud
+    # for i, pcd in enumerate(pcds):
+    #     downsampled = pcd.voxel_down_sample(voxel_size=0.01)
+    #     points = np.asarray(downsampled.points) #downsampled.points)
+    #     if points.size > 0:
+    #         depth_pcd = ps.register_point_cloud(f"Camera {i+1} points", points)
+
+    # ps.show()
+    # ps.remove_all_structures()
+    # # ----------------------------------------------------------------------
+
+    

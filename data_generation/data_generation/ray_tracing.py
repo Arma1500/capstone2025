@@ -8,7 +8,7 @@ import os
 import polyscope as ps
 ps.init()
 
-# Utility Functions
+# UTILITY FUNCTIONS
 # Initialise Cameras ---------------------------------------------------------------------
 def read_cam_data(path):
     # read camera data
@@ -122,7 +122,7 @@ def build_dict(ans, mesh):
 
     return camera_hit_list
 
-# Functions for visualisation
+# VIS FUNCTIONS FOR DEBUGGING
 # Polyscope scene visualisation ------------------------------------------------------------
 def polyscope_cam_params(camera_data):
     ex_world = np.linalg.inv(camera_data['ex_tensor'].numpy())
@@ -143,35 +143,95 @@ def polyscope_cam_params(camera_data):
     up_dir = (ex_world[:3, 1] / np.linalg.norm(ex_world[:3, 1])).tolist()
     extrinsics = ps.CameraExtrinsics(root=cam_pos, look_dir=look_dir, up_dir=up_dir)
 
-    print(f"cam_pos: {cam_pos}")
-    print(f"look_dir: {look_dir}")
-    print(f"up_dir: {up_dir}")
-
     return ps.CameraParameters(intrinsics, extrinsics)
 
 # Plot from .JSON -----------------------------------------------------------------------
-def plot_from_json(cams):
+def plot_from_json(path):
     all_points = []
-    all_directions = []
 
     for i in range(4):
-        with open(f'ground_truth_data/Camera_{i+1}/frame_0001.json', 'r') as f:
+        cam_path = os.path.join(output_path, f"Camera_{i+1}/frame_0001.json")
+        with open(cam_path, 'r') as f:
             camera_hit_list = json.load(f)
 
         # Extract just the hit points
         hit_points = np.array([entry['hit'] for entry in camera_hit_list if entry['hit'] is not None], dtype=np.float32)
 
-        cam_origin = np.linalg.inv(cams[i]['ex_tensor'].numpy())[:3,3]
-        direction = hit_points - cam_origin
-
-        # Convert to Point Cloud
-        # pcd = o3d.geometry.PointCloud()
-        # pcd.points = o3d.utility.Vector3dVector(hit_points)
-
         all_points.append(hit_points)
-        all_directions.append(direction)
-        print("pt cld added")
+        #print("pt cld added")
 
-    return all_points, all_directions 
+    return all_points
+
+# MAIN FUNCTION
+if __name__=="__main__":
+
+    # File Path Set Up -------------------------------------------------------------------------
+    camera_data_path = 'data_generation/data_generation/blender_camera_data.json'
+    meshes_path = '/media/humense/Expansion/Capstone/meshes'
+
+    output_path = '/media/humense/Expansion/Capstone/ground_truth'
+
+    # Ray Casting ------------------------------------------------------------------------------
+    # create cameras
+    cams_data = read_cam_data(camera_data_path)
+
+    # loop through all frames
+    mesh_files = sorted([f for f in os.listdir(meshes_path) if f.endswith('.ply')])
+    for mesh_file in mesh_files:
+        
+        if os.path.splitext(mesh_file)[0] != "frame_0002":
+            break # for debugging
+                        
+        mesh_path = os.path.join(meshes_path, mesh_file)
+        mesh = o3d.io.read_triangle_mesh(mesh_path)
+
+        # create ray casting scene and cast
+        cast_ans = ray_cast(mesh, cams_data)
+        print("ray casting complete!")
+
+        # save ray casting data in .json
+        for i, a in enumerate(cast_ans):
+            data = build_dict(a, mesh)
+
+            gt_cam_paths = os.path.join(output_path, f"Camera_{i+1}")
+            os.makedirs(gt_cam_paths, exist_ok=True)
+
+            # save file
+            file_path = os.path.join(gt_cam_paths, (os.path.splitext(mesh_file)[0] + ".json"))
+            with open(file_path, "w") as f: 
+                json.dump(data, f, indent=2)
+
+            print(f"Ground Truth for Camera_{i+1} added to {file_path}")
+
+
+    # # display for debugging ----------------------------------------------
+    # # display cameras in polyscope scene
+    # for i, cam in enumerate(cams_data):
+    #     print(f"Camera_{i+1} --------------------------")
+    #     params = polyscope_cam_params(cam)
+    #     cam = ps.register_camera_view(f"Camera {i+1}", params)
+
+    # # display original mesh in polyscope scene
+    # faces = np.asarray(mesh.triangles)
+    # vertices = np.asarray(mesh.vertices)
+    # ps_mesh = ps.register_surface_mesh("mesh", vertices, faces)
+
+    # # display saved ray casting result from .json file
+    # hit_pts = plot_from_json(output_path)
+    # for i in range(len(hit_pts)):
+    #     pcd = ps.register_point_cloud(f"Ground Truth Cam{i+1}", hit_pts[i])
+
+    # ps.show()
+    # ps.remove_all_structures()
+
+    # # display ray casting result plots
+    # for i, a in enumerate(cast_ans):
+    #         plt.imshow(a['t_hit'].numpy())
+    #         plt.title(f"cam{i+1}")
+    #         plt.xlabel("X-axis")
+    #         plt.ylabel("Y-axis")
+    #         plt.show()
+    # # -----------------------------------------------------------------------------------
+
 
 
