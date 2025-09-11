@@ -179,7 +179,7 @@ if __name__=="__main__":
     mesh_files = sorted([f for f in os.listdir(meshes_path) if f.endswith('.ply')])
     for mesh_file in mesh_files:
         
-        if "frame_0002" < os.path.splitext(mesh_file)[0] <= "frame_0010":
+        if "frame_0090" < os.path.splitext(mesh_file)[0] <= "frame_0100":
             pass # for debugging
         else:
             continue
@@ -190,7 +190,7 @@ if __name__=="__main__":
 
         # create ray casting scene and cast
         cast_ans = ray_cast(mesh, cams_data)
-        print("ray casting complete!")
+        #print("ray casting complete!")
 
         # save ray casting data in .json
         for i, a in enumerate(cast_ans):
@@ -204,7 +204,7 @@ if __name__=="__main__":
             with open(file_path, "w") as f: 
                 json.dump(data, f, indent=2)
 
-            print(f"Ground Truth for Camera_{i+1} added to {file_path}")
+            #print(f"Ground Truth for Camera_{i+1} added to {file_path}")
 
 
     # # display for debugging ----------------------------------------------

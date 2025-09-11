@@ -132,18 +132,18 @@ if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
     camera_data_path = 'blender_camera_data.json'
-    renders_path = '/media/humense/Expansion/Capstone/renders'
+    renders_path = '/media/humense/Expansion/Capstone/renders_scaled'
 
-    output_path = '/media/humense/Expansion/Capstone/render_pcds'
+    output_path = '/media/humense/Expansion/Capstone/render_pcds_scaled'
 
     # Point Cloud Generation --------------------------------------------------------------------
     cams_data = read_cam_data(camera_data_path)
 
     # same as the scale used for the depth renders from blender scene
-    min_depth=4.5
-    max_depth=5.5
+    min_depth=3.8
+    max_depth=6.8
 
-    start_frame = 81
+    start_frame = 51
     end_frame = 100
     frames = [str(i).zfill(4) for i in range(start_frame, end_frame + 1)]
     
