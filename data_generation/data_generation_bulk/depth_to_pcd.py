@@ -73,6 +73,38 @@ def load_normalized_depth(path, min_depth, max_depth):
 
     return o3d.geometry.Image(depth)
 
+def refine_normals(pcd, extrinsic_vec):
+    
+    points = np.asarray(pcd.points)
+    normals = np.asarray(pcd.normals)
+    R = extrinsic_vec[:3, :3]
+    t = extrinsic_vec[:3, 3]
+    cam_center = -R.T @ t
+
+    negative_count = 0
+
+    print(f'points: {points.shape}')
+    print(f'normals: {normals.shape}')
+    print(f'camera center {cam_center}')
+
+    # compute dot product of camera center towards the point and the normal vector.
+    for i, point in enumerate(points):
+        normal_vec = normals[i]
+        view_vector = point - cam_center
+        view_vector /= np.linalg.norm(view_vector)
+
+        product = view_vector @ normal_vec
+
+        # if the dot product is negative then flip the normal
+        if product < 0: 
+            negative_count += 1
+            normals[i] = -normal_vec
+    
+    print(negative_count)
+    pcd.normals = o3d.utility.Vector3dVector(normals)
+    
+    return pcd
+
 # Convert RGB and Depth Image to combined Point Cloud -------------------------------------------
 def img_to_pcd(cams, dir, frame_name, min_depth, max_depth):
     
@@ -103,6 +135,7 @@ def img_to_pcd(cams, dir, frame_name, min_depth, max_depth):
         # estimate normals
         pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.05, max_nn=30))
         pcd.orient_normals_towards_camera_location(extrinsics[:3, 3].tolist()) # orient based on the camera position?
+        refine_normals(pcd, extrinsics)
 
         pcds.append(pcd) 
     return pcds
@@ -159,12 +192,6 @@ if __name__=="__main__":
         merged_pcd = o3d.geometry.PointCloud()
         for pcd in pcds:
             merged_pcd += pcd
-
-        # # convert normals to float to use in Meshlab
-        # if merged_pcd.has_normals():
-        #     merged_pcd.normals = o3d.utility.Vector3dVector(
-        #         np.asarray(merged_pcd.normals, dtype=np.float32)
-        #     )
 
         # Save the merged point cloud
         output_filename = os.path.join(output_path, f"render_frame_{frame}.ply")
