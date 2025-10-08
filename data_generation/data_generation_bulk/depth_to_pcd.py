@@ -100,6 +100,10 @@ def img_to_pcd(cams, dir, frame_name, min_depth, max_depth):
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, 1.0, max_depth, False) 
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, cam_intrinsics, extrinsics)
 
+        # estimate normals
+        pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.05, max_nn=30))
+        pcd.orient_normals_towards_camera_location(extrinsics[:3, 3].tolist()) # orient based on the camera position?
+
         pcds.append(pcd) 
     return pcds
 
@@ -132,9 +136,9 @@ if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
     camera_data_path = 'blender_camera_data.json'
-    renders_path = '/media/humense/Expansion/Capstone/renders_scaled'
+    renders_path = '../simulation/pcds'
 
-    output_path = '/media/humense/Expansion/Capstone/render_pcds_scaled'
+    output_path = '../simulation/pcds_normals'
 
     # Point Cloud Generation --------------------------------------------------------------------
     cams_data = read_cam_data(camera_data_path)
@@ -143,8 +147,8 @@ if __name__=="__main__":
     min_depth=3.8
     max_depth=6.8
 
-    start_frame = 51
-    end_frame = 100
+    start_frame = 1
+    end_frame = 1
     frames = [str(i).zfill(4) for i in range(start_frame, end_frame + 1)]
     
     for frame in frames:
@@ -156,28 +160,38 @@ if __name__=="__main__":
         for pcd in pcds:
             merged_pcd += pcd
 
+        # # convert normals to float to use in Meshlab
+        # if merged_pcd.has_normals():
+        #     merged_pcd.normals = o3d.utility.Vector3dVector(
+        #         np.asarray(merged_pcd.normals, dtype=np.float32)
+        #     )
+
         # Save the merged point cloud
         output_filename = os.path.join(output_path, f"render_frame_{frame}.ply")
         o3d.io.write_point_cloud(output_filename, merged_pcd)
         print(f"Saved point cloud to: {output_filename}")
 
-    # # display for debugging ----------------------------------------------
-    # # display cameras in polyscope scene
-    # for i, cam in enumerate(cams_data):
-    #     print(f"Camera_{i+1} --------------------------")
-    #     params = polyscope_cam_params(cam)
-    #     cam = ps.register_camera_view(f"Camera {i+1}", params)
+    # display for debugging ----------------------------------------------
+    # display cameras in polyscope scene
+    for i, cam in enumerate(cams_data):
+        print(f"Camera_{i+1} --------------------------")
+        params = polyscope_cam_params(cam)
+        cam = ps.register_camera_view(f"Camera {i+1}", params)
 
-    # # displaying the last pointcloud
-    # for i, pcd in enumerate(pcds):
-    #     downsampled = pcd.voxel_down_sample(voxel_size=0.01)
-    #     points = np.asarray(downsampled.points) #downsampled.points)
-    #     if points.size > 0:
-    #         depth_pcd = ps.register_point_cloud(f"Camera {i+1} points", points)
+    # displaying the last pointcloud
+    for i, pcd in enumerate(pcds):
+        downsampled = pcd.voxel_down_sample(voxel_size=0.01)
+        points = np.asarray(downsampled.points) #downsampled.points)
+        normals = np.asarray(downsampled.normals)
+        if points.size > 0:
+            depth_pcd = ps.register_point_cloud(f"Camera {i+1} points", points)
+            depth_pcd.add_vector_quantity("normals", normals, enabled=True)
 
-    # ps.show()
-    # ps.remove_all_structures()
-    # # ----------------------------------------------------------------------
+    ps.show()
+    ps.remove_all_structures()
+    # ----------------------------------------------------------------------
+    
+    print("Has normals:", merged_pcd.has_normals())
 
     
 #### PROBLEM: She is moving towards one camera and away from the other so the front and back cameras don't capture the depth
