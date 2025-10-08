@@ -136,9 +136,9 @@ if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
     camera_data_path = 'blender_camera_data.json'
-    renders_path = '../simulation/pcds'
+    renders_path = '../renders_scaled'
 
-    output_path = '../simulation/pcds_normals'
+    output_path = '../pcds_normals'
 
     # Point Cloud Generation --------------------------------------------------------------------
     cams_data = read_cam_data(camera_data_path)
