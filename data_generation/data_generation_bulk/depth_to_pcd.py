@@ -169,9 +169,9 @@ if __name__=="__main__":
 
     # File Path Set Up -------------------------------------------------------------------------
     camera_data_path = 'blender_camera_data.json'
-    renders_path = '../renders_scaled'
+    renders_path = 'capstone2025/data_generation/renders_scaled'
 
-    output_path = '../pcds_normals'
+    output_path = 'capstone2025/data_generation/pcds_normals'
 
     # Point Cloud Generation --------------------------------------------------------------------
     cams_data = read_cam_data(camera_data_path)
@@ -198,28 +198,25 @@ if __name__=="__main__":
         o3d.io.write_point_cloud(output_filename, merged_pcd)
         print(f"Saved point cloud to: {output_filename}")
 
-    # display for debugging ----------------------------------------------
-    # display cameras in polyscope scene
-    for i, cam in enumerate(cams_data):
-        print(f"Camera_{i+1} --------------------------")
-        params = polyscope_cam_params(cam)
-        cam = ps.register_camera_view(f"Camera {i+1}", params)
+    # # display for debugging ----------------------------------------------
+    # # display cameras in polyscope scene
+    # for i, cam in enumerate(cams_data):
+    #     print(f"Camera_{i+1} --------------------------")
+    #     params = polyscope_cam_params(cam)
+    #     cam = ps.register_camera_view(f"Camera {i+1}", params)
 
-    # displaying the last pointcloud
-    for i, pcd in enumerate(pcds):
-        downsampled = pcd.voxel_down_sample(voxel_size=0.01)
-        points = np.asarray(downsampled.points) #downsampled.points)
-        normals = np.asarray(downsampled.normals)
-        if points.size > 0:
-            depth_pcd = ps.register_point_cloud(f"Camera {i+1} points", points)
-            depth_pcd.add_vector_quantity("normals", normals, enabled=True)
+    # # displaying the last pointcloud
+    # for i, pcd in enumerate(pcds):
+    #     downsampled = pcd.voxel_down_sample(voxel_size=0.01)
+    #     points = np.asarray(downsampled.points) #downsampled.points)
+    #     normals = np.asarray(downsampled.normals)
+    #     if points.size > 0:
+    #         depth_pcd = ps.register_point_cloud(f"Camera {i+1} points", points)
+    #         depth_pcd.add_vector_quantity("normals", normals, enabled=True)
 
-    ps.show()
-    ps.remove_all_structures()
-    # ----------------------------------------------------------------------
+    # ps.show()
+    # ps.remove_all_structures()
+    # # ----------------------------------------------------------------------
     
     print("Has normals:", merged_pcd.has_normals())
 
-    
-#### PROBLEM: She is moving towards one camera and away from the other so the front and back cameras don't capture the depth
-#### properly. I have to adjust the scale later
