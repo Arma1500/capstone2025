@@ -185,7 +185,7 @@ class FMN_Edited:
                 size, geodesic=geodesic, random_init=False
             )
     
-    def set_weights(self, weights=None, weight_type="icsm", verbose=False):
+    def set_weights(self, weights=None, weight_type="icsm", verbose=False, interval_size=None):
         """
         Set weights for each edge in the graph
 
@@ -237,6 +237,40 @@ class FMN_Edited:
             self.weights = sparse.csr_matrix(
                 (V, (I, J)), shape=(self.n_meshes, self.n_meshes)
             )
+
+        ##############################################################################################################################
+        #____________________________________________________CHANGES ADDED HERE______________________________________________________#
+
+        elif weight_type == 'sequence_decay':
+            self.use_icsm = False # might incorporate icsm later once I read more about it in consistent zoomout paper
+
+            if interval_size is None:
+                interval_size = 2
+
+            I = [x[0] for x in self.edges]
+            J = [x[1] for x in self.edges]
+
+            V = []
+            for (i,j) in self.edges:
+                val = abs(i - j)
+
+                if val <= interval_size:
+                    weight = 1.0
+                else:
+                    # maybe change this to exponential
+                    decay_factor = val - interval_size
+                    weight = 1.0/decay_factor
+
+                V.append(weight)
+            
+            self.weights = sparse.csr_matrix((V, (I,J)), shape=(self.n_meshes, self.n_meshes))
+            # undirected edges - look into this properly later I think the FM course talks about this in chapter 2
+            self.weights = 0.5 * (self.weights + self.weights.T)
+
+            # normalise
+            self.weights /= np.max(V)
+        
+        ##############################################################################################################################
 
         else:
             raise ValueError(
@@ -644,45 +678,45 @@ class FMN_Edited:
     
     ##############################################################################################################
     #_____________________________________________CHANGES MADE HERE______________________________________________#
-    def sequence_adjacency(self, n_meshes,
-                       decay='exp',
-                       scale=1.0,
-                       power=2.0,
-                       sigma=1.0,
-                       max_hop=None,
-                       normalize='none'):
+    # def sequence_adjacency(self, n_meshes,
+    #                    decay='exp',
+    #                    scale=1.0,
+    #                    power=2.0,
+    #                    sigma=1.0,
+    #                    max_hop=None,
+    #                    normalize='none'):
         
-        idx = np.arange(n_meshes)
-        d = np.abs(idx[:, None] - idx[None, :]).astype(float)  # pairwise distances
+    #     idx = np.arange(n_meshes)
+    #     d = np.abs(idx[:, None] - idx[None, :]).astype(float)  # pairwise distances
 
-        if decay == 'exp':
-            W = np.exp(-scale * d)
-        elif decay == 'inv':
-            W = 1.0 / (1.0 + (d ** power))
-        elif decay == 'gauss':
-            W = np.exp(-(d ** 2) / (2.0 * sigma ** 2))
-        elif decay == 'linear':
-            W = np.maximum(0.0, 1.0 - scale * d)
-        else:
-            raise ValueError("decay must be one of 'exp','inv','gauss','linear'")
+    #     if decay == 'exp':
+    #         W = np.exp(-scale * d)
+    #     elif decay == 'inv':
+    #         W = 1.0 / (1.0 + (d ** power))
+    #     elif decay == 'gauss':
+    #         W = np.exp(-(d ** 2) / (2.0 * sigma ** 2))
+    #     elif decay == 'linear':
+    #         W = np.maximum(0.0, 1.0 - scale * d)
+    #     else:
+    #         raise ValueError("decay must be one of 'exp','inv','gauss','linear'")
 
-        # optionally mask out self or preserve (commonly keep self = 1)
-        # W[np.diag_indices_from(W)] = 1.0  # usually fine to keep
+    #     # optionally mask out self or preserve (commonly keep self = 1)
+    #     W[np.diag_indices_from(W)] = 1.0  # usually fine to keep
 
-        if max_hop is not None:
-            W[d > max_hop] = 0.0
+    #     if max_hop is not None:
+    #         W[d > max_hop] = 0.0
 
-        # normalization
-        if normalize == 'row':
-            row_sums = W.sum(axis=1, keepdims=True)
-            row_sums[row_sums == 0] = 1.0
-            W = W / row_sums
-        elif normalize == 'global':
-            maxv = W.max()
-            if maxv > 0:
-                W = W / maxv
+    #     # normalization
+    #     if normalize == 'row':
+    #         row_sums = W.sum(axis=1, keepdims=True)
+    #         row_sums[row_sums == 0] = 1.0
+    #         W = W / row_sums
+    #     elif normalize == 'global':
+    #         maxv = W.max()
+    #         if maxv > 0:
+    #             W = W / maxv
 
-        return W
+    #     return W
 
     def zoomout_iteration(
         self,
@@ -725,7 +759,7 @@ class FMN_Edited:
             # Only computed at first iteration
             self.set_weights(weight_type="adjacency")
         elif weight_type == "custom":
-            self.set_weights(self.sequence_adjacency(n_meshes=len(self.meshlist)))
+            self.set_weights(weight_type="sequence_decay")
 
         self.compute_W(M=M_init)
         self.compute_CLB(equals_id=equals_id)
