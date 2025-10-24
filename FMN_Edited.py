@@ -679,7 +679,7 @@ class FMN_Edited:
     
     ##############################################################################################################
     #_____________________________________________CHANGES MADE HERE______________________________________________#
-    def set_weights_new_2(self, verbose=False, alpha=0.3, beta=1.0, interval=4):
+    def set_weights_new_2(self, alpha, beta, interval, verbose=False):
         """
         Compute ICSM weights with a smooth temporal boost that decays with distance.
 
@@ -829,6 +829,7 @@ class FMN_Edited:
         cclb_size,
         M_init,
         M_final,
+        alpha, beta, interval,
         isometric=True,
         weight_type="icsm",
         n_jobs=1,
@@ -867,15 +868,13 @@ class FMN_Edited:
         elif weight_type == "custom":
             self.set_weights(weight_type="sequence_decay")
         elif weight_type == "new":
-            self.set_weights_new_2()
+            self.set_weights_new_2(alpha=alpha, beta=beta, interval=interval)
 
         self.compute_W(M=M_init)
         self.compute_CLB(equals_id=equals_id)
         self.compute_CCLB(cclb_size)
         self.compute_p2p(complete=complete, n_jobs=n_jobs)
         self.compute_maps(M_final, complete=complete)
-
-    ##############################################################################################################
 
     def zoomout_refine(
         self,
@@ -889,6 +888,7 @@ class FMN_Edited:
         n_jobs=1,
         equals_id=False,
         verbose=False,
+        alpha=0.3, beta=1.0, interval=4
     ):
         """
         Refines the functional maps using Consistent Zoomout refinement
@@ -939,6 +939,7 @@ class FMN_Edited:
                     m_cclb,
                     self.M,
                     new_M,
+                    alpha=alpha, beta=beta, interval=interval,
                     weight_type=weight_type,
                     equals_id=equals_id,
                     n_jobs=n_jobs,
@@ -951,12 +952,15 @@ class FMN_Edited:
                     m_cclb,
                     self.M,
                     new_M,
+                    alpha=alpha, beta=beta, interval=interval,
                     weight_type=weight_type,
                     equals_id=equals_id,
                     n_jobs=n_jobs,
                     complete=True,
+                    
                 )
 
+    ##############################################################################################################
 
 def CLB_quad_form(maps, weights, M=None):
     """
