@@ -679,7 +679,7 @@ class FMN_Edited:
     
     ##############################################################################################################
     #_____________________________________________CHANGES MADE HERE______________________________________________#
-    def set_weights_new_2(self, verbose=False, alpha=0.3, beta=1.0):
+    def set_weights_new_2(self, verbose=False, alpha=0.3, beta=1.0, interval=4):
         """
         Compute ICSM weights with a smooth temporal boost that decays with distance.
 
@@ -711,8 +711,13 @@ class FMN_Edited:
         seq_boost = []
         for (i, j) in self.edges:
             val = abs(i - j)
-            # Decaying boost: starts high, falls with distance
-            boost = 1.0 + beta * np.exp(-alpha * val)
+
+            if val <= interval:
+                boost = 1.0 + beta
+            else:
+                # Decaying boost: starts high, falls with distance
+                boost = 1.0 + beta * np.exp(-alpha * val)
+            
             seq_boost.append(boost)
 
         seq_boost = np.array(seq_boost)
@@ -725,8 +730,8 @@ class FMN_Edited:
         J = [x[1] for x in self.edges]
         W = sparse.csr_matrix((combined_w, (I, J)), shape=(self.n_meshes, self.n_meshes))
 
-        # Symmetrize and normalize
-        W = 0.5 * (W + W.T)
+        # # Symmetrize and normalize???? is this needed???
+        # W = 0.5 * (W + W.T)
 
         self.weights = W
         return self
