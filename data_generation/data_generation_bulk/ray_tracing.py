@@ -5,8 +5,8 @@ import math
 import json
 import os
 
-# import polyscope as ps
-# ps.init()
+import polyscope as ps
+ps.init()
 
 # UTILITY FUNCTIONS
 # Initialise Cameras ---------------------------------------------------------------------
@@ -150,7 +150,7 @@ def plot_from_json(path):
     all_points = []
 
     for i in range(4):
-        cam_path = os.path.join(output_path, f"Camera_{i+1}/frame_0001.json")
+        cam_path = os.path.join(path, f"Camera_{i+1}/frame_0001.json")
         with open(cam_path, 'r') as f:
             camera_hit_list = json.load(f)
 
