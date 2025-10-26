@@ -868,6 +868,7 @@ class FMN_Edited:
         elif weight_type == "custom":
             self.set_weights(weight_type="sequence_decay")
         elif weight_type == "new":
+            print('With Sequential Decay')
             self.set_weights_new_2(alpha=alpha, beta=beta, interval=interval)
 
         self.compute_W(M=M_init)
