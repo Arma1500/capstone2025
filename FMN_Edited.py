@@ -238,41 +238,6 @@ class FMN_Edited:
                 (V, (I, J)), shape=(self.n_meshes, self.n_meshes)
             )
 
-        ##############################################################################################################################
-        #____________________________________________________CHANGES ADDED HERE______________________________________________________#
-
-        elif weight_type == 'sequence_decay':
-                self.use_icsm = False
-
-                # Default decay control
-                if interval_size is None:
-                    interval_size = self.n_meshes/3
-                alpha = 0.2  # Decay rate (tune this: higher = faster decay)
-
-                I = [x[0] for x in self.edges]
-                J = [x[1] for x in self.edges]
-                V = []
-
-                # Compute sequence-based exponentially decaying weights
-                for (i, j) in self.edges:
-                    val = abs(i - j)
-                    if val <= interval_size:
-                        weight = 1.0
-                    else:
-                        decay_factor = val - interval_size # the further they get from the source mesh, the less impact they have in zoomout
-                        weight = np.exp(-alpha * decay_factor)
-                    V.append(weight)
-
-                # Build sparse matrix
-                W = sparse.csr_matrix((V, (I, J)), shape=(self.n_meshes, self.n_meshes))
-
-                # Make symmetric (optional but usually desirable)
-                W = 0.5 * (W + W.T)
-
-                self.weights = W
-        
-        ##############################################################################################################################
-
         else:
             raise ValueError(
                 f'"weight_type" should be "icsm" or "adjacency, not {weight_type}'
@@ -679,7 +644,7 @@ class FMN_Edited:
     
     ##############################################################################################################
     #_____________________________________________CHANGES MADE HERE______________________________________________#
-    def set_weights_new_2(self, alpha, beta, interval, verbose=False):
+    def set_weights_new(self, bonus, interval, verbose=False):
         """
         Compute ICSM weights with a smooth temporal boost that decays with distance.
 
@@ -713,10 +678,10 @@ class FMN_Edited:
             val = abs(i - j)
 
             if val <= interval:
-                boost = 1.0 + beta
+                boost = bonus
             else:
                 # Decaying boost: starts high, falls with distance
-                boost = 1.0 + beta * np.exp(-alpha * val)
+                boost = bonus * np.exp(-val)
             
             seq_boost.append(boost)
 
@@ -736,100 +701,13 @@ class FMN_Edited:
         self.weights = W
         return self
 
-    # def set_weights_new(self, verbose=False, interval_size=None):
-    #     self.use_icsm = True
-
-    #     # Compute ICSM part 
-    #     if self.cycles is None:
-    #         if verbose:
-    #             print("Computing cycle information")
-    #         self.extract_3_cycles()
-    #         self.compute_Amat()
-
-    #     weight_arr = self.optimize_icsm(verbose=verbose)  # (n_edges,)
-    #     median_val = np.median(weight_arr[self.A_sub])
-    #     if np.isclose(median_val, 0, atol=1e-4):
-    #         weight_arr /= np.mean(weight_arr[self.A_sub])
-    #     else:
-    #         weight_arr /= median_val
-    #     icsm_w = np.exp(-np.square(weight_arr) / 2)  # (n_edges,)
-
-    #     # Compute sequence decay part
-    #     if interval_size is None:
-    #         interval_size = self.n_meshes/3
-    #     alpha = 0.2  # Decay rate (tune this: higher = faster decay)
-
-    #     seq_w = []
-    #     for (i, j) in self.edges:
-    #         val = abs(i - j)
-    #         if val <= interval_size:
-    #             weight = 1.0
-    #         else:
-    #             decay_factor = val - i
-    #             weight = np.exp(-alpha * decay_factor)
-    #         seq_w.append(weight)
-
-    #     seq_w = np.array(seq_w)
-
-    #     combined_w = icsm_w * seq_w
-
-    #     # Construct the sparse weight matrix
-    #     I = [x[0] for x in self.edges]
-    #     J = [x[1] for x in self.edges]
-    #     W = sparse.csr_matrix((combined_w, (I, J)), shape=(self.n_meshes, self.n_meshes))
-
-    #     # Symmetrize
-    #     W = 0.5 * (W + W.T)
-
-    #     self.weights = W
-    #     return self
-
-    # def sequence_adjacency(self, n_meshes,
-    #                    decay='exp',
-    #                    scale=1.0,
-    #                    power=2.0,
-    #                    sigma=1.0,
-    #                    max_hop=None,
-    #                    normalize='none'):
-        
-    #     idx = np.arange(n_meshes)
-    #     d = np.abs(idx[:, None] - idx[None, :]).astype(float)  # pairwise distances
-
-    #     if decay == 'exp':
-    #         W = np.exp(-scale * d)
-    #     elif decay == 'inv':
-    #         W = 1.0 / (1.0 + (d ** power))
-    #     elif decay == 'gauss':
-    #         W = np.exp(-(d ** 2) / (2.0 * sigma ** 2))
-    #     elif decay == 'linear':
-    #         W = np.maximum(0.0, 1.0 - scale * d)
-    #     else:
-    #         raise ValueError("decay must be one of 'exp','inv','gauss','linear'")
-
-    #     # optionally mask out self or preserve (commonly keep self = 1)
-    #     W[np.diag_indices_from(W)] = 1.0  # usually fine to keep
-
-    #     if max_hop is not None:
-    #         W[d > max_hop] = 0.0
-
-    #     # normalization
-    #     if normalize == 'row':
-    #         row_sums = W.sum(axis=1, keepdims=True)
-    #         row_sums[row_sums == 0] = 1.0
-    #         W = W / row_sums
-    #     elif normalize == 'global':
-    #         maxv = W.max()
-    #         if maxv > 0:
-    #             W = W / maxv
-
-    #     return W
 
     def zoomout_iteration(
         self,
         cclb_size,
         M_init,
         M_final,
-        alpha, beta, interval,
+        bonus, interval,
         isometric=True,
         weight_type="icsm",
         n_jobs=1,
@@ -865,11 +743,8 @@ class FMN_Edited:
         elif self.weights is None:
             # Only computed at first iteration
             self.set_weights(weight_type="adjacency")
-        elif weight_type == "custom":
-            self.set_weights(weight_type="sequence_decay")
-        elif weight_type == "new":
-            print('With Sequential Decay')
-            self.set_weights_new_2(alpha=alpha, beta=beta, interval=interval)
+        elif weight_type == "sequence deacy":
+            self.set_weights_new(bonus, interval)
 
         self.compute_W(M=M_init)
         self.compute_CLB(equals_id=equals_id)
@@ -889,7 +764,7 @@ class FMN_Edited:
         n_jobs=1,
         equals_id=False,
         verbose=False,
-        alpha=0.3, beta=1.0, interval=4
+        bonus=2.0, interval=2
     ):
         """
         Refines the functional maps using Consistent Zoomout refinement
@@ -940,7 +815,7 @@ class FMN_Edited:
                     m_cclb,
                     self.M,
                     new_M,
-                    alpha=alpha, beta=beta, interval=interval,
+                    bonus=bonus, interval=interval,
                     weight_type=weight_type,
                     equals_id=equals_id,
                     n_jobs=n_jobs,
@@ -953,7 +828,7 @@ class FMN_Edited:
                     m_cclb,
                     self.M,
                     new_M,
-                    alpha=alpha, beta=beta, interval=interval,
+                    bonus=bonus, interval=interval,
                     weight_type=weight_type,
                     equals_id=equals_id,
                     n_jobs=n_jobs,

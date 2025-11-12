@@ -92,6 +92,8 @@ def build_dict(ans, mesh):
     primitive_ids = ans['primitive_ids'].numpy().reshape((height_px, width_px))
     primitive_uvs = ans['primitive_uvs'].numpy().reshape((height_px, width_px , 2))
 
+    primitive_normals = ans['primitive_normals'].numpy().reshape((height_px, width_px, 3))
+
     camera_hit_list = []
     count = 0
     for y in range(height_px):
@@ -105,6 +107,7 @@ def build_dict(ans, mesh):
             u, v = primitive_uvs[y, x]
             v0, v1, v2 = triangle_vertices[tri_id]
             hit_point = (1 - u - v) * v0 + u * v1 + v * v2
+            normal = primitive_normals[y, x]
 
             dv1 = float(np.linalg.norm(hit_point - v0))
             dv2 = float(np.linalg.norm(hit_point - v1))
@@ -115,6 +118,7 @@ def build_dict(ans, mesh):
                 "pixel": [x, y],
                 "triangle_id": int(tri_id),
                 "hit": hit_point.tolist(),
+                "normals" : normal.tolist(),
                 "dv1": dv1,
                 "dv2": dv2,
                 "dv3": dv3
@@ -169,7 +173,7 @@ if __name__=="__main__":
     camera_data_path = 'blender_camera_data.json'
     meshes_path = '/media/humense/Expansion/Capstone/meshes'
 
-    output_path = '/media/humense/Expansion/Capstone/ground_truth'
+    output_path = '/media/humense/Expansion/Capstone/ground_truth_10'
 
     # Ray Casting ------------------------------------------------------------------------------
     # create cameras
@@ -179,7 +183,7 @@ if __name__=="__main__":
     mesh_files = sorted([f for f in os.listdir(meshes_path) if f.endswith('.ply')])
     for mesh_file in mesh_files:
         
-        if "frame_0090" < os.path.splitext(mesh_file)[0] <= "frame_0100":
+        if os.path.splitext(mesh_file)[0] <= "frame_0020":
             pass # for debugging
         else:
             continue
