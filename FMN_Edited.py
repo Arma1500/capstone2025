@@ -13,6 +13,13 @@ import pyFM.spectral as spectral
 
 from sklearn.neighbors import NearestNeighbors
 
+############################################################################################################
+
+# EDITS MADE TO ZOOMOUT_REFINEMENT AND ZOOMOUT_TERATION
+# Also a new function SET_WEIGHTS_NEW has also been added where the sequntial weights are added.
+
+############################################################################################################
+
 
 class FMN_Edited:
     """

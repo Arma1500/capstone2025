@@ -116,8 +116,8 @@ def setup_compositor_output(cam_name):
 
     # Normalized depth (8-bit PNG)
     map_range = tree.nodes.new('CompositorNodeMapRange')
-    map_range.inputs['From Min'].default_value = 4.5
-    map_range.inputs['From Max'].default_value = 5.5
+    map_range.inputs['From Min'].default_value = 3.8
+    map_range.inputs['From Max'].default_value = 6.8
     map_range.inputs['To Min'].default_value = 0
     map_range.inputs['To Max'].default_value = 1
 
