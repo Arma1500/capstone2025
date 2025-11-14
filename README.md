@@ -17,7 +17,7 @@ I recommend running everything from here, i.e. capstone2025. Even the file paths
 ### The important files to run are:
 1. main.ipynb
 
-        - This is the main file to run.
+- This is the main file to run.
 
 
 This is where the FMN and Consistent ZoomOut implementation for the generated meshes is set up. It runs both the original FMN that is installed with pyFM and the FMN_Edited that has been codpied, edited to include the sequential weight decay and saved in this repository. It also includes some visualisation method with both meshplot and open3D. 
@@ -29,8 +29,8 @@ This is an alternate method where everything is the same except the initial maps
 3. FMN_Edited.py
 
 It is not needed to run this file, it is simply a copy of the original FMN from pyFM where the sequential weight decay has been added. The sections editied are maked with comments in the file. They include
-            - set_weights_new() - added function for the sequential weights.
-            - zoomout_iteration() and zoomout_refine() - where the set_weights_new() has been added. 
+- set_weights_new() - added function for the sequential weights.
+- zoomout_iteration() and zoomout_refine() - where the set_weights_new() has been added. 
 
 4. data_generation
 
@@ -84,6 +84,7 @@ Implementation of Consistent ZoomOut with pyFM
 * Running Consistent ZoomOut refinement with the same parameters as the CZ demo.
 
 Sequential Decay
+
 7. Editing FMN class to add sequential weights with bonus and interval values.
 
 Evaluation
