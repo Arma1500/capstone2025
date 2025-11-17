@@ -1,14 +1,14 @@
 # capstone2025
 3D Shape Correspondence of Sequential Deforming Objects.  
 
-explaination from capstone report
+This project investigates how temporal information can be leveraged to refine and resolve ambiguities in pairwise correspondences across a sequence of depth scans. Specifically, a map computed between two temporally adjacent frames is expected to be significantly more accurate than a map composed over a long-time sequence. To address this limitation, a Sequential Weight Decay regularisation term was introduced into the refinement process. This approach assigns higher weights to correspondences between temporally close frames, allowing these high-confidence local mappings to guide the optimisation of longer-range or less reliable maps within the network. The scope of this project is limited to implementing a synthetic dataset of a sequence of depth scans with a state-of-the-art correspondence refinement approach, Consistent ZoomOut: Efficient Spectral Map Synchronization from Huang et al. (2020).
 
 ## Running Requirements
-pyFM
-Open3D
-OpenCV
-Polyscope
-Meshplot - this isn't in the requirements.txt but it can be found here: https://skoch9.github.io/meshplot/tutorial/#installing-meshplot. If it dosn't work there are alternate plotting fucntions for visualisation in the code.
+* pyFM
+* Open3D
+* OpenCV
+* Polyscope
+* Meshplot - this isn't in the requirements.txt but it can be found here: https://skoch9.github.io/meshplot/tutorial/#installing-meshplot. If it dosn't work there are alternate plotting fucntions for visualisation in the code.
 
 ## Repository Guide
 
