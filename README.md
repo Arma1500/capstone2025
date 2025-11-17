@@ -4,6 +4,7 @@
 This project investigates how temporal information can be leveraged to refine and resolve ambiguities in pairwise correspondences across a sequence of depth scans. Specifically, a map computed between two temporally adjacent frames is expected to be significantly more accurate than a map composed over a long-time sequence. To address this limitation, a Sequential Weight Decay regularisation term was introduced into the refinement process. This approach assigns higher weights to correspondences between temporally close frames, allowing these high-confidence local mappings to guide the optimisation of longer-range or less reliable maps within the network. The scope of this project is limited to implementing a synthetic dataset of a sequence of depth scans with a state-of-the-art correspondence refinement approach, Consistent ZoomOut: Efficient Spectral Map Synchronization from Huang et al. (2020).
 
 ## Running Requirements
+A requirements.txt file has been provided, however the key libraries used for visualisation and processing include:
 * pyFM
 * Open3D
 * OpenCV
@@ -12,7 +13,7 @@ This project investigates how temporal information can be leveraged to refine an
 
 ## Repository Guide
 
-I recommend running everything from here, i.e. capstone2025. Even the file paths in the data_generation folder have been setup in terms of this directory.
+I recommend running everything from here, i.e. **capstone2025**. Even the file paths in the data_generation folder have been setup in terms of this directory.
 
 ### The important files to run are:
 1. main.ipynb
@@ -57,6 +58,7 @@ Images and files saved during development.
 (Steps 1 - 3 can be found in the data generation folder)
 
 **Implementation of Consistent ZoomOut with pyFM**
+
 4. Obtaining Intial Maps
 * Loading meshes and calcuating they eigen basis
 * Nearest Neighbour seach with Open3D to calclate inital maps between all meshes in the dataset
@@ -67,7 +69,9 @@ Images and files saved during development.
 * Running Consistent ZoomOut refinement with the same parameters as the CZ demo.
 
 **Sequential Decay**
+
 7. Editing FMN class to add sequential weights with bonus and interval values.
+
 8. Evaluation
 
 ## References
