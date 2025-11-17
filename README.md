@@ -53,27 +53,10 @@ All old code, saved just incase.
 
 Images and files saved during development.
 
+## Info - Implementation 
+(Steps 1 - 3 can be found in the data generation folder)
 
-## Progress
-Data Collection
-1. Data saved from blender simulation:
-* Depth and RGB images at each frame
-* Triangle Mesh at each frame
-* Camera Data i.e. intrinsics and extrinsics
-
-2. Ray Tracing to generate the ground truth for each frame:
-* Polyscople scene set up using camera data and triangle meshes to match the blender scene
-* Ray Tracing using Open3D
-* Ground Truth Data for each frame saved as *.json* file
-
-3. Converting Depth images to Point Cloud to Triangle Meshes:
-* Obtaining normalised depth values from depth images with OpenCV
-* Convert to point cloud with Open3D using camera intrinsics
-* Calculating Normals
-* Transform using camera extrinsics
-* Converting Render Point Clouds to Triangles meshes with Screened Possion Reconstruction in Meshlab 
-
-Implementation of Consistent ZoomOut with pyFM
+**Implementation of Consistent ZoomOut with pyFM**
 4. Obtaining Intial Maps
 * Loading meshes and calcuating they eigen basis
 * Nearest Neighbour seach with Open3D to calclate inital maps between all meshes in the dataset
@@ -83,13 +66,19 @@ Implementation of Consistent ZoomOut with pyFM
 * Setting Up Functional Map Network with pyFM, where each node is a mesh and the edges are the maps between them.
 * Running Consistent ZoomOut refinement with the same parameters as the CZ demo.
 
-Sequential Decay
-
+**Sequential Decay**
 7. Editing FMN class to add sequential weights with bonus and interval values.
-
-Evaluation
+8. Evaluation
 
 ## References
+1. Huang, R., Ren, J., Wonka, P., & Ovsjanikov, M. (2020, August). Consistent zoomout: Efficient spectral map synchronization. In Computer Graphics Forum (Vol. 39, No. 5, pp. 265-278).
+2. Kazhdan M., & Hoppe, H. (2013). Screened Poisson Surface Reconstruction.  ACM Transactions on Graphics (TOG), 32(3), 29.  
+3. Magnet, R. (2020). Python Implementation of Functional Maps. https://github.com/RobinMagnet/pyFM.git 
+4. Ovsjanikov, M., Ben-Chen, M., Solomon, J., Butscher, A., & Guibas, L. (2012). Functional maps: a flexible representation of maps between shapes. ACM Transactions on Graphics (ToG), 31(4), 1-11.
+5. Sharp, N. (2019). Polyscope. https://polyscope.run/py/
+6. Zhou, Q., Park, J., & Koltun, V. (2018). Open3D: A Modern Library for 3D Data Processing. https://www.open3d.org/ 
+
+
 
 
 
