@@ -54,7 +54,7 @@ Images and files saved during development.
 
 ### Info - Implementation 
 
-![Capstone Flowchart](https://github.com/Arma1500/capstone2025/blob/main/media/CompoundMap.png)
+![Capstone Flowchart](https://github.com/Arma1500/capstone2025/blob/main/media/Capstone%20Flowchart%20(1).png)
 
 **Implementation of Consistent ZoomOut with pyFM**
 
