@@ -53,7 +53,8 @@ All old code, saved just incase.
 Images and files saved during development.
 
 ### Info - Implementation 
-(Steps 1 - 3 can be found in the data generation folder)
+
+![Capstone Flowchart](https://github.com/Arma1500/capstone2025/blob/main/media/CompoundMap.png)
 
 **Implementation of Consistent ZoomOut with pyFM**
 
