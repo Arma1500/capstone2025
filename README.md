@@ -14,45 +14,47 @@ A requirements.txt file has been provided, however the key libraries used for vi
 I recommend running everything from here, i.e. **capstone2025**. Even the file paths in the data_generation folder have been setup in terms of this directory.
 
 ### The important files to run are:
-1. main.ipynb
+
+**main.ipynb**
 
 - This is the main file to run.
 
 
 This is where the FMN and Consistent ZoomOut implementation for the generated meshes is set up. It runs both the original FMN that is installed with pyFM and the FMN_Edited that has been codpied, edited to include the sequential weight decay and saved in this repository. It also includes some visualisation method with both meshplot and open3D. 
 
-2. alternate_main.ipynb 
+**alternate_main.ipynb** 
 
 This is an alternate method where everything is the same except the initial maps which are calculated through intermediate maps based on a specified interval of time, I refer to them in the code as compounded maps. Instead of creating a map directly between frame 1 to frame 4, a map between frame 1 to frame 3 and then frame 3 to frame 4 is used for that.
 
-3. FMN_Edited.py
+**FMN_Edited.py**
 
 It is not needed to run this file, it is simply a copy of the original FMN from pyFM where the sequential weight decay has been added. The sections editied are maked with comments in the file. They include:
 - set_weights_new() - added function for the sequential weights.
 - zoomout_iteration() and zoomout_refine() - where the set_weights_new() has been added. 
 
-4. data_generation
+**data_generation**
 
 This includes the data generation processes from obtaining the depth renders from blender to processing and saving them as pointclouds along with their supporting files. More information is avalible inside the folder. Please note that the blender secne is not provided in this repository, just the scripts for saving the depth renders, meshes and camera parameters are. There is also a option just to visualise the data generation process and steps in data_generation_vis.ipynb
 
 #### other folders:
-1. render_meshes_10 
+**render_meshes_10** 
 
 These are the pre saved triangle meshes converted from the pointclouds saved from data_generation, to be used by main.ipynb and alternate_main.ipynb. Please note, only the file numbers will not correspond to the ones saved in the data_generation folder as those are for example.
 
-2. saved_maps
+**saved_maps**
 
 Where the maps from the FMN models in main.ipynb and alternate_main.ipynb are saved and can be loaded from.
 
-3. archive
+**archive**
 
 All old code, saved just incase.
 
-4. media
+**media**
 
 Images and files saved during development.
 
-### Info - Implementation 
+## Project Implementation 
+![Capstone Flowchart](https://github.com/Arma1500/capstone2025/blob/main/media/Capstone%20Flowchart%20(1).png)
 
 **Data Collection**
 
@@ -72,8 +74,6 @@ Images and files saved during development.
 * Calculating Normals
 * Transform using camera extrinsics
 * Converting Render Point Clouds to Triangles meshes with Screened Possion Reconstruction in Meshlab 
-
-![Capstone Flowchart](https://github.com/Arma1500/capstone2025/blob/main/media/Capstone%20Flowchart%20(1).png)
 
 **Implementation of Consistent ZoomOut with pyFM**
 
