@@ -1,9 +1,8 @@
-# capstone2025
-3D Shape Correspondence of Sequential Deforming Objects.  
-
+# Capstone Project 2025
+## 3D Shape Correspondence of Sequential Deforming Objects.  
 This project investigates how temporal information can be leveraged to refine and resolve ambiguities in pairwise correspondences across a sequence of depth scans. Specifically, a map computed between two temporally adjacent frames is expected to be significantly more accurate than a map composed over a long-time sequence. To address this limitation, a Sequential Weight Decay regularisation term was introduced into the refinement process. This approach assigns higher weights to correspondences between temporally close frames, allowing these high-confidence local mappings to guide the optimisation of longer-range or less reliable maps within the network. The scope of this project is limited to implementing a synthetic dataset of a sequence of depth scans with a state-of-the-art correspondence refinement approach, Consistent ZoomOut: Efficient Spectral Map Synchronization from Huang et al. (2020).
 
-## Running Requirements
+### Running Requirements
 A requirements.txt file has been provided, however the key libraries used for visualisation and processing include:
 * pyFM
 * Open3D
@@ -11,8 +10,7 @@ A requirements.txt file has been provided, however the key libraries used for vi
 * Polyscope
 * Meshplot - this isn't in the requirements.txt but it can be found here: https://skoch9.github.io/meshplot/tutorial/#installing-meshplot. If it dosn't work there are alternate plotting fucntions for visualisation in the code.
 
-## Repository Guide
-
+### Repository Guide
 I recommend running everything from here, i.e. **capstone2025**. Even the file paths in the data_generation folder have been setup in terms of this directory.
 
 ### The important files to run are:
@@ -29,7 +27,7 @@ This is an alternate method where everything is the same except the initial maps
 
 3. FMN_Edited.py
 
-It is not needed to run this file, it is simply a copy of the original FMN from pyFM where the sequential weight decay has been added. The sections editied are maked with comments in the file. They include
+It is not needed to run this file, it is simply a copy of the original FMN from pyFM where the sequential weight decay has been added. The sections editied are maked with comments in the file. They include:
 - set_weights_new() - added function for the sequential weights.
 - zoomout_iteration() and zoomout_refine() - where the set_weights_new() has been added. 
 
@@ -37,7 +35,7 @@ It is not needed to run this file, it is simply a copy of the original FMN from 
 
 This includes the data generation processes from obtaining the depth renders from blender to processing and saving them as pointclouds along with their supporting files. More information is avalible inside the folder. Please note that the blender secne is not provided in this repository, just the scripts for saving the depth renders, meshes and camera parameters are. There is also a option just to visualise the data generation process and steps in data_generation_vis.ipynb
 
-### other folders:
+#### other folders:
 1. render_meshes_10 
 
 These are the pre saved triangle meshes converted from the pointclouds saved from data_generation, to be used by main.ipynb and alternate_main.ipynb. Please note, only the file numbers will not correspond to the ones saved in the data_generation folder as those are for example.
@@ -54,7 +52,7 @@ All old code, saved just incase.
 
 Images and files saved during development.
 
-## Info - Implementation 
+### Info - Implementation 
 (Steps 1 - 3 can be found in the data generation folder)
 
 **Implementation of Consistent ZoomOut with pyFM**
