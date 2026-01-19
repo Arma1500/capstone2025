@@ -2,9 +2,6 @@
 ## 3D Shape Correspondence of Sequential Deforming Objects.  
 This project investigates how temporal information can be leveraged to refine and resolve ambiguities in pairwise correspondences across a sequence of depth scans. Specifically, a map computed between two temporally adjacent frames is expected to be significantly more accurate than a map composed over a long-time sequence. To address this limitation, a Sequential Weight Decay regularisation term was introduced into the refinement process. This approach assigns higher weights to correspondences between temporally close frames, allowing these high-confidence local mappings to guide the optimisation of longer-range or less reliable maps within the network. The scope of this project is limited to implementing a synthetic dataset of a sequence of depth scans with a state-of-the-art correspondence refinement approach, Consistent ZoomOut: Efficient Spectral Map Synchronization from Huang et al. (2020).
 
-[![Project Video](https://img.youtube.com)](https://youtu.be/yG4-K3udv8Q)
-
-
 ### Running Requirements
 A requirements.txt file has been provided, however the key libraries used for visualisation and processing include:
 * pyFM
